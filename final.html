@@ -1,0 +1,3198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sports Talent AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #060d1a;
+    --bg-secondary: #0a1628;
+    --bg-card: #0f1e35;
+    --bg-card2: #122040;
+    --accent-blue: #00c6ff;
+    --accent-green: #00ff9d;
+    --accent-gold: #ffd700;
+    --accent-red: #ff4d6d;
+    --accent-purple: #a855f7;
+    --text-primary: #e8f4ff;
+    --text-secondary: #7a9bbf;
+    --text-muted: #3d5a7a;
+    --border: rgba(0,198,255,0.15);
+    --border-bright: rgba(0,198,255,0.4);
+    --glow-blue: 0 0 20px rgba(0,198,255,0.3);
+    --glow-green: 0 0 20px rgba(0,255,157,0.3);
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Exo 2', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events:none; z-index:0; opacity:0.4;
+  }
+
+  /* GRID LINES BG */
+  body::after {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,198,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,198,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  /* ===== SCREENS ===== */
+  .screen { display:none; position:relative; z-index:1; min-height:100vh; }
+  .screen.active { display:flex; flex-direction:column; }
+
+  /* ===== LANDING ===== */
+  #screen-landing {
+    align-items:center; justify-content:center;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,198,255,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(0,255,157,0.08) 0%, transparent 50%),
+                var(--bg-primary);
+    padding: 40px 20px;
+  }
+
+  .landing-orb {
+    position:absolute; border-radius:50%;
+    filter:blur(80px); pointer-events:none;
+  }
+  .orb1 { width:500px;height:500px;background:rgba(0,198,255,0.07);top:-100px;left:-100px; }
+  .orb2 { width:400px;height:400px;background:rgba(0,255,157,0.05);bottom:-50px;right:-50px; }
+
+  .landing-inner { text-align:center; max-width:700px; position:relative; z-index:2; }
+
+  .logo-badge {
+    display:inline-flex; align-items:center; gap:10px;
+    background: rgba(0,198,255,0.08);
+    border: 1px solid var(--border-bright);
+    border-radius:50px; padding:8px 20px; margin-bottom:32px;
+    backdrop-filter:blur(10px);
+  }
+  .logo-badge .dot { width:8px;height:8px;border-radius:50%;background:var(--accent-green);
+    box-shadow:0 0 10px var(--accent-green); animation:pulse 2s infinite; }
+  .logo-badge span { font-size:13px; color:var(--accent-blue); font-weight:600; letter-spacing:2px; text-transform:uppercase; }
+
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+  .landing-title {
+    font-family:'Rajdhani',sans-serif;
+    font-size:clamp(52px,8vw,96px);
+    font-weight:700; line-height:0.95;
+    letter-spacing:-2px;
+  }
+  .landing-title .line1 { display:block; color:var(--text-primary); }
+  .landing-title .line2 { display:block;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+  .landing-sub { font-size:17px; color:var(--text-secondary); margin:20px 0 48px; line-height:1.6; font-weight:300; }
+
+  .role-cards { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; max-width:500px; margin:0 auto; }
+
+  .role-card {
+    position:relative; overflow:hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:36px 28px;
+    cursor:pointer;
+    transition: all 0.3s ease;
+  }
+  .role-card::before {
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(135deg, transparent, rgba(255,255,255,0.02));
+    transition:opacity 0.3s;
+  }
+  .role-card:hover { transform:translateY(-4px); border-color:var(--border-bright); box-shadow:var(--glow-blue); }
+  .role-card.player:hover { border-color:rgba(0,255,157,0.4); box-shadow:var(--glow-green); }
+
+  .role-icon { font-size:42px; margin-bottom:16px; display:block; }
+  .role-title { font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:700; margin-bottom:6px; }
+  .role-desc { font-size:13px; color:var(--text-secondary); line-height:1.5; }
+  .role-arrow { position:absolute; top:20px; right:20px; color:var(--text-muted); font-size:18px; transition:all 0.3s; }
+  .role-card:hover .role-arrow { color:var(--accent-blue); transform:translate(2px,-2px); }
+  .role-card.coach .role-title { color:var(--accent-blue); }
+  .role-card.player .role-title { color:var(--accent-green); }
+
+  .sports-strip {
+    display:flex; gap:24px; margin-top:48px; align-items:center;
+    opacity:0.4; font-size:28px;
+  }
+  .sports-strip span { animation:floatY 3s ease-in-out infinite; }
+  .sports-strip span:nth-child(2){animation-delay:0.3s}
+  .sports-strip span:nth-child(3){animation-delay:0.6s}
+  .sports-strip span:nth-child(4){animation-delay:0.9s}
+  .sports-strip span:nth-child(5){animation-delay:1.2s}
+  @keyframes floatY{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+  /* ===== AUTH SCREEN ===== */
+  #screen-auth {
+    align-items:center; justify-content:center;
+    background: radial-gradient(ellipse at 30% 50%, rgba(0,198,255,0.08) 0%, transparent 60%), var(--bg-primary);
+    padding:40px 20px;
+  }
+
+  .auth-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:48px 40px;
+    width:100%; max-width:460px;
+    backdrop-filter:blur(20px);
+  }
+
+  .auth-header { margin-bottom:36px; }
+  .auth-back { background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:14px;
+    display:flex;align-items:center;gap:6px;margin-bottom:24px;font-family:'Exo 2',sans-serif;
+    transition:color 0.2s; }
+  .auth-back:hover{color:var(--accent-blue)}
+  .auth-role-badge {
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(0,198,255,0.08);border:1px solid var(--border-bright);
+    border-radius:30px;padding:6px 16px;margin-bottom:16px;
+  }
+  .auth-role-badge.green{background:rgba(0,255,157,0.08);border-color:rgba(0,255,157,0.4);}
+  .auth-role-badge span{font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+  .auth-role-badge.green span{color:var(--accent-green);}
+  .auth-role-badge span{color:var(--accent-blue);}
+  .auth-title{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;}
+  .auth-sub{font-size:14px;color:var(--text-secondary);margin-top:4px;}
+
+  .tab-row{display:flex;gap:4px;background:var(--bg-secondary);border-radius:10px;padding:4px;margin-bottom:28px;}
+  .tab-btn{flex:1;padding:10px;border:none;background:none;color:var(--text-secondary);
+    border-radius:8px;cursor:pointer;font-family:'Exo 2',sans-serif;font-size:14px;font-weight:600;
+    transition:all 0.2s;}
+  .tab-btn.active{background:var(--bg-card2);color:var(--text-primary);box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+
+  .form-group{margin-bottom:18px;}
+  .form-label{display:block;font-size:12px;font-weight:600;color:var(--text-secondary);
+    letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+  .form-input{width:100%;background:var(--bg-secondary);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px;color:var(--text-primary);font-family:'Exo 2',sans-serif;
+    font-size:15px;outline:none;transition:all 0.2s;}
+  .form-input:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(0,198,255,0.1);}
+  .form-input::placeholder{color:var(--text-muted);}
+
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  select.form-input{appearance:none;cursor:pointer;}
+
+  .btn-primary{width:100%;padding:16px;background:linear-gradient(135deg,#0088cc,#00c6ff);
+    border:none;border-radius:10px;color:white;font-family:'Exo 2',sans-serif;
+    font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.5px;
+    transition:all 0.3s;box-shadow:0 4px 20px rgba(0,198,255,0.3);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,198,255,0.4);}
+  .btn-primary.green{background:linear-gradient(135deg,#00994d,#00ff9d);
+    box-shadow:0 4px 20px rgba(0,255,157,0.3);}
+  .btn-primary.green:hover{box-shadow:0 8px 30px rgba(0,255,157,0.4);}
+
+  /* ===== APP SHELL ===== */
+  #screen-player-app, #screen-coach-app {
+    flex-direction:row; align-items:stretch; min-height:100vh;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width:260px; flex-shrink:0;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh;
+    z-index:10;
+  }
+
+  .sidebar-logo {
+    padding:24px 20px;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:12px;
+  }
+  .sidebar-logo .logo-icon{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,#0088cc,#00c6ff);
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+  }
+  .sidebar-logo .logo-text{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;line-height:1.1;}
+  .sidebar-logo .logo-text small{display:block;font-size:11px;font-weight:400;
+    color:var(--text-secondary);letter-spacing:1px;text-transform:uppercase;}
+
+  .sidebar-user {
+    padding:16px 20px;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:12px;
+  }
+  .user-avatar{
+    width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;font-weight:700;flex-shrink:0;
+    background:linear-gradient(135deg,rgba(0,198,255,0.2),rgba(0,255,157,0.2));
+    border:2px solid var(--border-bright);
+  }
+  .user-name{font-size:14px;font-weight:600;}
+  .user-role{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;}
+
+  .sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto;}
+  .nav-section{margin-bottom:24px;}
+  .nav-section-title{font-size:10px;font-weight:700;color:var(--text-muted);
+    letter-spacing:2px;text-transform:uppercase;padding:0 8px;margin-bottom:8px;}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;
+    padding:11px 12px;border-radius:10px;
+    cursor:pointer;font-size:14px;font-weight:500;
+    color:var(--text-secondary);margin-bottom:2px;
+    transition:all 0.2s;position:relative;
+  }
+  .nav-item:hover{background:rgba(0,198,255,0.06);color:var(--text-primary);}
+  .nav-item.active{background:rgba(0,198,255,0.1);color:var(--accent-blue);
+    border:1px solid rgba(0,198,255,0.2);}
+  .nav-item.active-green{background:rgba(0,255,157,0.08);color:var(--accent-green);
+    border:1px solid rgba(0,255,157,0.2);}
+  .nav-item .nav-icon{font-size:18px;width:24px;text-align:center;}
+  .nav-badge{margin-left:auto;background:var(--accent-red);color:white;
+    font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;}
+
+  .sidebar-footer{padding:16px 20px;border-top:1px solid var(--border);}
+  .offline-indicator{
+    display:flex;align-items:center;gap:8px;
+    font-size:12px;color:var(--text-secondary);
+  }
+  .offline-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-green);
+    box-shadow:0 0 8px var(--accent-green);}
+  .btn-logout{
+    margin-top:10px;width:100%;padding:10px;background:rgba(255,77,109,0.1);
+    border:1px solid rgba(255,77,109,0.2);border-radius:8px;
+    color:var(--accent-red);cursor:pointer;font-family:'Exo 2',sans-serif;
+    font-size:13px;font-weight:600;transition:all 0.2s;
+  }
+  .btn-logout:hover{background:rgba(255,77,109,0.2);}
+
+  /* MAIN CONTENT */
+  .main-content {
+    flex:1;overflow-y:auto;
+    background: var(--bg-primary);
+  }
+
+  .page{display:none;padding:32px 36px;animation:fadeIn 0.3s ease;}
+  .page.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;}
+  .page-title{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;line-height:1;}
+  .page-sub{font-size:14px;color:var(--text-secondary);margin-top:4px;}
+  .page-actions{display:flex;gap:10px;}
+
+  /* CARDS */
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;}
+  .card-title{font-size:13px;font-weight:600;color:var(--text-secondary);
+    letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;}
+  .card-value{font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;line-height:1;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .stat-card{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:20px;
+    position:relative;overflow:hidden;
+    transition:border-color 0.2s;
+  }
+  .stat-card::after{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .stat-card.blue::after{background:linear-gradient(90deg,#0088cc,#00c6ff);}
+  .stat-card.green::after{background:linear-gradient(90deg,#00994d,#00ff9d);}
+  .stat-card.gold::after{background:linear-gradient(90deg,#cc9900,#ffd700);}
+  .stat-card.purple::after{background:linear-gradient(90deg,#7c3aed,#a855f7);}
+  .stat-card:hover{border-color:var(--border-bright);}
+  .stat-icon{font-size:24px;margin-bottom:12px;}
+  .stat-label{font-size:12px;color:var(--text-secondary);font-weight:600;
+    text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .stat-value{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;}
+  .stat-change{font-size:12px;margin-top:4px;}
+  .stat-change.up{color:var(--accent-green);}
+  .stat-change.down{color:var(--accent-red);}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+  /* SPORT SELECTOR */
+  .sports-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+  .sport-card{
+    background:var(--bg-card);border:2px solid var(--border);
+    border-radius:var(--radius-lg);padding:28px 20px;
+    cursor:pointer;text-align:center;transition:all 0.3s;position:relative;overflow:hidden;
+  }
+  .sport-card:hover{transform:translateY(-3px);border-color:var(--border-bright);box-shadow:var(--glow-blue);}
+  .sport-card.selected{border-color:var(--accent-green);background:rgba(0,255,157,0.05);
+    box-shadow:var(--glow-green);}
+  .sport-card .sport-emoji{font-size:44px;margin-bottom:12px;display:block;}
+  .sport-card .sport-name{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:600;}
+  .sport-card .sport-events{font-size:12px;color:var(--text-secondary);margin-top:4px;}
+  .selected-badge{
+    position:absolute;top:12px;right:12px;
+    background:var(--accent-green);color:#000;
+    border-radius:50%;width:22px;height:22px;
+    display:none;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  }
+  .sport-card.selected .selected-badge{display:flex;}
+
+  /* FITNESS TESTS */
+  .test-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+  .test-card{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:24px;
+    cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;
+  }
+  .test-card:hover{border-color:var(--border-bright);transform:translateY(-2px);}
+  .test-card .test-icon{font-size:36px;margin-bottom:12px;}
+  .test-card .test-name{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+  .test-card .test-desc{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px;}
+  .test-card .test-meta{display:flex;gap:12px;}
+  .test-tag{
+    font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;
+    background:rgba(0,198,255,0.1);color:var(--accent-blue);
+    border:1px solid rgba(0,198,255,0.2);
+  }
+  .test-tag.green{background:rgba(0,255,157,0.1);color:var(--accent-green);border-color:rgba(0,255,157,0.2);}
+  .test-status{
+    position:absolute;top:16px;right:16px;
+    font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+  }
+  .test-status.done{background:rgba(0,255,157,0.1);color:var(--accent-green);}
+  .test-status.pending{background:rgba(255,215,0,0.1);color:var(--accent-gold);}
+
+  /* VIDEO RECORDER */
+  .recorder-area{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;
+  }
+  .video-viewport{
+    width:100%;height:380px;
+    background:linear-gradient(135deg,#060d1a,#0a1628);
+    position:relative;display:flex;align-items:center;justify-content:center;
+  }
+  .camera-placeholder{text-align:center;}
+  .camera-placeholder .cam-icon{font-size:56px;opacity:0.3;margin-bottom:12px;}
+  .camera-placeholder p{color:var(--text-muted);font-size:14px;}
+  .video-overlay{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:20px;pointer-events:none;
+  }
+  .ai-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(0,198,255,0.15);backdrop-filter:blur(10px);
+    border:1px solid rgba(0,198,255,0.3);border-radius:20px;
+    padding:6px 14px;font-size:12px;color:var(--accent-blue);font-weight:600;
+    align-self:flex-start;
+  }
+  .pose-guides{
+    border:2px dashed rgba(0,198,255,0.25);
+    border-radius:12px;position:absolute;
+    top:50%;left:50%;transform:translate(-50%,-55%);
+    width:120px;height:200px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pose-icon{font-size:80px;opacity:0.15;}
+  .rec-controls{
+    display:flex;align-items:center;justify-content:center;gap:24px;
+    padding:24px;background:rgba(0,0,0,0.3);
+    border-top:1px solid var(--border);
+  }
+  .rec-btn{
+    width:70px;height:70px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:28px;cursor:pointer;border:none;
+    background:linear-gradient(135deg,#cc0000,#ff4444);
+    box-shadow:0 0 0 4px rgba(204,0,0,0.2);
+    transition:all 0.2s;
+  }
+  .rec-btn:hover{transform:scale(1.05);box-shadow:0 0 0 6px rgba(204,0,0,0.3);}
+  .rec-btn.recording{animation:recPulse 1.5s infinite;}
+  @keyframes recPulse{0%,100%{box-shadow:0 0 0 4px rgba(204,0,0,0.3)}50%{box-shadow:0 0 0 12px rgba(204,0,0,0.1)}}
+  .ctrl-btn{
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;cursor:pointer;border:1px solid var(--border);
+    background:var(--bg-card);color:var(--text-secondary);transition:all 0.2s;
+  }
+  .ctrl-btn:hover{border-color:var(--border-bright);color:var(--text-primary);}
+
+  /* AI RESULTS */
+  .result-hero{
+    background:linear-gradient(135deg,var(--bg-card),var(--bg-card2));
+    border:1px solid var(--border);border-radius:var(--radius-lg);
+    padding:32px;margin-bottom:24px;text-align:center;
+    position:relative;overflow:hidden;
+  }
+  .result-hero::before{
+    content:'';position:absolute;top:-50%;left:-50%;
+    width:200%;height:200%;
+    background:radial-gradient(circle,rgba(0,255,157,0.05) 0%,transparent 60%);
+  }
+  .result-rating{
+    display:inline-flex;align-items:center;gap:10px;
+    background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);
+    border-radius:30px;padding:10px 24px;margin-bottom:16px;
+  }
+  .result-rating.average{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);}
+  .result-rating.poor{background:rgba(255,77,109,0.1);border-color:rgba(255,77,109,0.3);}
+  .rating-emoji{font-size:22px;}
+  .rating-text{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;}
+  .result-score{font-family:'Rajdhani',sans-serif;font-size:72px;font-weight:700;line-height:1;
+    background:linear-gradient(135deg,var(--accent-blue),var(--accent-green));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .result-label{color:var(--text-secondary);font-size:15px;margin-top:4px;}
+
+  .metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+  .metric-card{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:20px;text-align:center;
+  }
+  .metric-icon{font-size:28px;margin-bottom:10px;}
+  .metric-value{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;}
+  .metric-label{font-size:12px;color:var(--text-secondary);text-transform:uppercase;
+    letter-spacing:1px;margin-top:4px;}
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap{margin-bottom:12px;}
+  .progress-label-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;}
+  .progress-track{height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;}
+  .progress-fill{height:100%;border-radius:4px;transition:width 1s ease;
+    background:linear-gradient(90deg,var(--accent-blue),var(--accent-green));}
+
+  /* BADGES / GAMIFICATION */
+  .badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .badge-card{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:20px;text-align:center;
+    transition:all 0.2s;
+  }
+  .badge-card.earned{border-color:rgba(255,215,0,0.3);background:rgba(255,215,0,0.04);}
+  .badge-card:hover{transform:translateY(-2px);}
+  .badge-icon{font-size:40px;margin-bottom:8px;
+    filter:grayscale(1) opacity(0.3);}
+  .badge-card.earned .badge-icon{filter:none;drop-shadow:0 0 10px rgba(255,215,0,0.3);}
+  .badge-name{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .badge-desc{font-size:11px;color:var(--text-secondary);}
+  .badge-card.earned .badge-name{color:var(--accent-gold);}
+
+  /* LEADERBOARD */
+  .leaderboard-list{display:flex;flex-direction:column;gap:8px;}
+  .lb-item{
+    display:flex;align-items:center;gap:14px;
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:10px;padding:14px 18px;transition:all 0.2s;
+  }
+  .lb-item:hover{border-color:var(--border-bright);}
+  .lb-item.me{border-color:rgba(0,255,157,0.3);background:rgba(0,255,157,0.03);}
+  .lb-rank{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;
+    width:32px;text-align:center;}
+  .lb-rank.gold{color:var(--accent-gold);}
+  .lb-rank.silver{color:#c0c0c0;}
+  .lb-rank.bronze{color:#cd7f32;}
+  .lb-avatar{width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(135deg,rgba(0,198,255,0.2),rgba(168,85,247,0.2));
+    border:2px solid var(--border-bright);
+    display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .lb-name{flex:1;font-weight:600;}
+  .lb-sport{font-size:12px;color:var(--text-secondary);}
+  .lb-score{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--accent-blue);}
+
+  /* COACH REVIEW */
+  .athlete-list{display:flex;flex-direction:column;gap:10px;}
+  .athlete-row{
+    display:flex;align-items:center;gap:14px;
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px 20px;cursor:pointer;transition:all 0.2s;
+  }
+  .athlete-row:hover{border-color:var(--border-bright);transform:translateX(3px);}
+  .athlete-info{flex:1;}
+  .athlete-name{font-weight:600;margin-bottom:3px;}
+  .athlete-sport{font-size:12px;color:var(--text-secondary);}
+  .video-thumb{
+    width:80px;height:50px;border-radius:8px;
+    background:var(--bg-secondary);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+    position:relative;overflow:hidden;
+  }
+  .play-overlay{
+    position:absolute;inset:0;background:rgba(0,0,0,0.4);
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+  }
+  .review-status{
+    font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;
+  }
+  .review-status.new{background:rgba(0,198,255,0.1);color:var(--accent-blue);}
+  .review-status.reviewed{background:rgba(0,255,157,0.1);color:var(--accent-green);}
+
+  /* PHYSIO */
+  .physio-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .physio-card{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:24px;transition:all 0.2s;
+  }
+  .physio-card:hover{border-color:var(--border-bright);transform:translateY(-2px);}
+  .physio-avatar{font-size:40px;margin-bottom:12px;}
+  .physio-name{font-weight:700;font-size:16px;margin-bottom:4px;}
+  .physio-spec{font-size:12px;color:var(--text-secondary);margin-bottom:12px;}
+  .physio-rating{font-size:13px;color:var(--accent-gold);}
+  .btn-sm{
+    display:inline-block;padding:8px 18px;border-radius:8px;
+    font-family:'Exo 2',sans-serif;font-size:13px;font-weight:600;
+    cursor:pointer;border:none;transition:all 0.2s;
+  }
+  .btn-sm.primary{background:rgba(0,198,255,0.15);color:var(--accent-blue);
+    border:1px solid rgba(0,198,255,0.3);}
+  .btn-sm.primary:hover{background:rgba(0,198,255,0.25);}
+  .btn-sm.green{background:rgba(0,255,157,0.15);color:var(--accent-green);
+    border:1px solid rgba(0,255,157,0.3);}
+  .btn-sm.green:hover{background:rgba(0,255,157,0.25);}
+
+  /* FUNDING */
+  .funding-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .funding-card{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius-lg);padding:28px;transition:all 0.2s;
+  }
+  .funding-card:hover{border-color:var(--border-bright);}
+  .funding-logo{font-size:36px;margin-bottom:12px;}
+  .funding-name{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+  .funding-amount{font-size:13px;color:var(--accent-green);font-weight:600;margin-bottom:8px;}
+  .funding-desc{font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px;}
+  .funding-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+
+  /* EARNINGS */
+  .earnings-row{display:flex;align-items:center;justify-content:space-between;
+    padding:14px 0;border-bottom:1px solid var(--border);}
+  .earnings-row:last-child{border-bottom:none;}
+  .earn-name{font-weight:600;margin-bottom:3px;}
+  .earn-date{font-size:12px;color:var(--text-secondary);}
+  .earn-amount{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--accent-green);}
+
+  /* TRAINING PLAN */
+  .plan-list{display:flex;flex-direction:column;gap:10px;}
+  .plan-item{
+    display:flex;align-items:center;gap:14px;
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:10px;padding:16px 20px;
+  }
+  .plan-num{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;
+    color:var(--text-muted);width:36px;}
+  .plan-info{flex:1;}
+  .plan-name{font-weight:600;margin-bottom:3px;}
+  .plan-detail{font-size:12px;color:var(--text-secondary);}
+  .plan-duration{font-size:13px;color:var(--accent-blue);font-weight:600;}
+
+  /* UPLOAD AREA */
+  .upload-area{
+    border:2px dashed var(--border);border-radius:var(--radius-lg);
+    padding:48px;text-align:center;cursor:pointer;transition:all 0.2s;
+    background:rgba(0,198,255,0.02);
+  }
+  .upload-area:hover{border-color:var(--border-bright);background:rgba(0,198,255,0.05);}
+  .upload-icon{font-size:48px;opacity:0.4;margin-bottom:16px;}
+  .upload-text{font-size:16px;font-weight:600;margin-bottom:6px;}
+  .upload-sub{font-size:13px;color:var(--text-secondary);}
+
+  /* DB SCHEMA SECTION */
+  .db-table{
+    background:var(--bg-card);border:1px solid var(--border);
+    border-radius:var(--radius);margin-bottom:16px;overflow:hidden;
+  }
+  .db-table-header{
+    background:rgba(0,198,255,0.08);padding:14px 20px;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:10px;
+  }
+  .db-table-header .table-icon{font-size:18px;}
+  .db-table-header .table-name{font-family:'Share Tech Mono',monospace;font-size:14px;
+    color:var(--accent-blue);font-weight:600;}
+  .db-table-header .table-desc{font-size:12px;color:var(--text-secondary);margin-left:auto;}
+  .db-fields{padding:0;}
+  .db-field{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 20px;border-bottom:1px solid rgba(0,198,255,0.05);
+    font-family:'Share Tech Mono',monospace;font-size:13px;
+  }
+  .db-field:last-child{border-bottom:none;}
+  .field-key{font-size:10px;background:rgba(255,215,0,0.1);color:var(--accent-gold);
+    padding:2px 6px;border-radius:4px;font-weight:700;}
+  .field-fk{font-size:10px;background:rgba(168,85,247,0.1);color:var(--accent-purple);
+    padding:2px 6px;border-radius:4px;}
+  .field-name{color:var(--text-primary);flex:1;}
+  .field-type{color:var(--accent-green);width:120px;}
+  .field-note{font-size:11px;color:var(--text-muted);font-family:'Exo 2',sans-serif;}
+
+  /* MISC */
+  .section-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;margin-bottom:16px;}
+  .divider{height:1px;background:var(--border);margin:24px 0;}
+  .alert-bar{
+    background:rgba(0,198,255,0.08);border:1px solid rgba(0,198,255,0.2);
+    border-radius:10px;padding:14px 18px;
+    display:flex;align-items:center;gap:10px;
+    font-size:13px;margin-bottom:24px;
+  }
+  .alert-bar.warning{background:rgba(255,215,0,0.08);border-color:rgba(255,215,0,0.2);}
+  .alert-bar.success{background:rgba(0,255,157,0.08);border-color:rgba(0,255,157,0.2);}
+
+  .chip{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;
+  }
+  .chip.blue{background:rgba(0,198,255,0.1);color:var(--accent-blue);border:1px solid rgba(0,198,255,0.2);}
+  .chip.green{background:rgba(0,255,157,0.1);color:var(--accent-green);border:1px solid rgba(0,255,157,0.2);}
+  .chip.gold{background:rgba(255,215,0,0.1);color:var(--accent-gold);border:1px solid rgba(255,215,0,0.2);}
+  .chip.red{background:rgba(255,77,109,0.1);color:var(--accent-red);border:1px solid rgba(255,77,109,0.2);}
+  .chip.purple{background:rgba(168,85,247,0.1);color:var(--accent-purple);border:1px solid rgba(168,85,247,0.2);}
+
+  textarea.form-input{resize:vertical;min-height:100px;}
+
+  .chart-bar-wrap{display:flex;flex-direction:column;gap:10px;}
+  .chart-bar-item{display:flex;align-items:center;gap:12px;}
+  .chart-bar-label{width:90px;font-size:13px;color:var(--text-secondary);}
+  .chart-bar-track{flex:1;height:10px;background:var(--bg-secondary);border-radius:5px;overflow:hidden;}
+  .chart-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--accent-blue),var(--accent-green));}
+  .chart-bar-val{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;width:40px;text-align:right;}
+
+  .feedback-box{
+    background:var(--bg-secondary);border:1px solid var(--border);
+    border-radius:10px;padding:16px;margin-top:16px;font-size:14px;line-height:1.6;
+    color:var(--text-secondary);border-left:3px solid var(--accent-blue);
+  }
+  .star-row{display:flex;gap:4px;font-size:20px;cursor:pointer;}
+
+  /* BOTTOM NAV (mobile feel on desktop) */
+  .mock-status-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 36px;background:var(--bg-secondary);
+    border-bottom:1px solid var(--border);
+    font-size:12px;color:var(--text-muted);
+  }
+  .mock-status-bar .status-right{display:flex;gap:12px;align-items:center;}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:3px;}
+  ::-webkit-scrollbar-thumb:hover{background:var(--text-secondary);}
+
+  .sync-indicator{
+    display:flex;align-items:center;gap:6px;
+    font-size:12px;color:var(--accent-green);
+  }
+  .sync-spin{animation:spin 2s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ===== LANDING ===== -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-orb orb1"></div>
+  <div class="landing-orb orb2"></div>
+  <div class="landing-inner">
+    <div class="logo-badge">
+      <div class="dot"></div>
+      <span>AI-Powered Sports Analytics</span>
+    </div>
+    <h1 class="landing-title">
+      <span class="line1">AthiliX</span>
+      
+    </h1>
+    <p class="landing-sub">Discover, train, and elevate athletic talent with<br>AI-powered performance analysis & coaching</p>
+    <div class="role-cards">
+      <div class="role-card player" onclick="goAuth('player')">
+        <div class="role-arrow">↗</div>
+        <span class="role-icon">🏃</span>
+        <div class="role-title">Player</div>
+        <div class="role-desc">Record fitness tests, get AI feedback, track your progress & connect with coaches</div>
+      </div>
+      <div class="role-card coach" onclick="goAuth('coach')">
+        <div class="role-arrow">↗</div>
+        <span class="role-icon">📋</span>
+        <div class="role-title">Coach</div>
+        <div class="role-desc">Review athlete videos, give feedback, upload training plans & manage earnings</div>
+      </div>
+    </div>
+    <div class="sports-strip">
+      <span>🏏</span><span>⚽</span><span>🏀</span><span>🏃</span><span>🏊</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AUTH ===== -->
+<div id="screen-auth" class="screen">
+  <div class="auth-box">
+    <div class="auth-header">
+      <button class="auth-back" onclick="goScreen('screen-landing')">← Back</button>
+      <div id="auth-role-badge" class="auth-role-badge">
+        <span id="auth-role-label">PLAYER</span>
+      </div>
+      <div class="auth-title" id="auth-title">Welcome Back</div>
+      <div class="auth-sub" id="auth-sub">Sign in to continue your journey</div>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login',this)">Sign In</button>
+      <button class="tab-btn" onclick="switchTab('signup',this)">Register</button>
+    </div>
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input class="form-input" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" placeholder="Enter your password">
+      </div>
+      <button id="auth-btn" class="btn-primary" onclick="doLogin()">Sign In</button>
+    </div>
+    <div id="signup-form" style="display:none">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input id="signup-firstname" class="form-input" placeholder="Arjun">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input id="signup-lastname" class="form-input" placeholder="Sharma">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input id="signup-email" class="form-input" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group" id="sport-select-wrap">
+        <label class="form-label">Primary Sport</label>
+        <select id="signup-sport" class="form-input">
+          <option>Cricket</option><option>Football</option><option>Basketball</option>
+          <option>Athletics</option><option>Swimming</option><option>Badminton</option>
+        </select>
+      </div>
+      <div class="form-row" id="player-extra">
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input id="signup-age" class="form-input" type="number" placeholder="18">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select id="signup-gender" class="form-input"><option>Male</option><option>Female</option><option>Other</option></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input id="signup-password" class="form-input" type="password" placeholder="Create a strong password">
+      </div>
+      <button id="signup-btn" class="btn-primary" onclick="doSignup()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PLAYER APP ===== -->
+<div id="screen-player-app" class="screen">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">Sports Talent AI<small>Player Portal</small></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar">AS</div>
+      <div>
+        <div class="user-name">Arjun Sharma</div>
+        <div class="user-role">Cricket · Batsman</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Overview</div>
+        <div class="nav-item active" onclick="showPage('p-dashboard',this)">
+          <span class="nav-icon">🏠</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('p-sports',this)">
+          <span class="nav-icon">🏆</span> Select Sport
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Training</div>
+        <div class="nav-item" onclick="showPage('p-tests',this)">
+          <span class="nav-icon">📊</span> Fitness Tests
+        </div>
+        <div class="nav-item" onclick="showPage('p-record',this)">
+          <span class="nav-icon">🎥</span> Record Test
+        </div>
+        <div class="nav-item" onclick="showPage('p-send-coach',this)">
+          <span class="nav-icon">📤</span> Send to Coach
+          <span class="nav-badge" id="player-sent-badge" style="display:none">0</span>
+        </div>
+        <div class="nav-item" onclick="showPage('p-results',this)">
+          <span class="nav-icon">🤖</span> AI Results
+          <span class="nav-badge">1</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Community</div>
+        <div class="nav-item" onclick="showPage('p-leaderboard',this)">
+          <span class="nav-icon">🥇</span> Leaderboard
+        </div>
+        <div class="nav-item" onclick="showPage('p-badges',this)">
+          <span class="nav-icon">🎖️</span> Achievements
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Support</div>
+        <div class="nav-item" onclick="showPage('p-physio',this)">
+          <span class="nav-icon">🏥</span> Physiotherapist
+        </div>
+        <div class="nav-item" onclick="showPage('p-funding',this)">
+          <span class="nav-icon">💰</span> Scholarships
+        </div>
+        <div class="nav-item" onclick="showPage('p-database',this)">
+          <span class="nav-icon">🗄️</span> Database Schema
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="offline-indicator">
+        <div class="offline-dot"></div>
+        <span>Online · Data synced</span>
+      </div>
+      <button class="btn-logout" onclick="goScreen('screen-landing')">⏻ Logout</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="mock-status-bar">
+      <span>Sports Talent AI — Player Portal</span>
+      <div class="status-right">
+        <div class="sync-indicator"><span class="sync-spin">↻</span> Syncing...</div>
+        <span>📶 Online</span>
+        <span>🔋 87%</span>
+      </div>
+    </div>
+
+    <!-- PLAYER DASHBOARD -->
+    <div id="p-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Dashboard</div>
+          <div class="page-sub">Welcome back, Arjun! You're on a 5-day streak 🔥</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn-sm primary" onclick="showPage('p-record',document.querySelector('.nav-item:nth-child(6))'))">+ Record Test</button>
+        </div>
+      </div>
+      <div class="alert-bar success">
+        <span>✅</span> Your last vertical jump test was reviewed by Coach Rahul — <strong>Excellent feedback!</strong>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon">🏅</div>
+          <div class="stat-label">Overall Rank</div>
+          <div class="stat-value">#47</div>
+          <div class="stat-change up">↑ +12 this week</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">📊</div>
+          <div class="stat-label">Tests Done</div>
+          <div class="stat-value">18</div>
+          <div class="stat-change up">↑ +3 this month</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-label">Avg Score</div>
+          <div class="stat-value">78.4</div>
+          <div class="stat-change up">↑ +4.2</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">🎖️</div>
+          <div class="stat-label">Badges</div>
+          <div class="stat-value">7</div>
+          <div class="stat-change up">+1 new</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Performance Trends</div>
+          <div class="chart-bar-wrap">
+            <div class="chart-bar-item">
+              <div class="chart-bar-label">Vertical Jump</div>
+              <div class="chart-bar-track"><div class="chart-bar-fill" style="width:82%"></div></div>
+              <div class="chart-bar-val">82</div>
+            </div>
+            <div class="chart-bar-item">
+              <div class="chart-bar-label">Shuttle Run</div>
+              <div class="chart-bar-track"><div class="chart-bar-fill" style="width:76%"></div></div>
+              <div class="chart-bar-val">76</div>
+            </div>
+            <div class="chart-bar-item">
+              <div class="chart-bar-label">Sit-ups</div>
+              <div class="chart-bar-track"><div class="chart-bar-fill" style="width:91%"></div></div>
+              <div class="chart-bar-val">91</div>
+            </div>
+            <div class="chart-bar-item">
+              <div class="chart-bar-label">Endurance</div>
+              <div class="chart-bar-track"><div class="chart-bar-fill" style="width:68%"></div></div>
+              <div class="chart-bar-val">68</div>
+            </div>
+            <div class="chart-bar-item">
+              <div class="chart-bar-label">Flexibility</div>
+              <div class="chart-bar-track"><div class="chart-bar-fill" style="width:73%"></div></div>
+              <div class="chart-bar-val">73</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent Activity</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="font-size:24px;">🎥</span>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:600;">Vertical Jump Test</div>
+                <div style="font-size:12px;color:var(--text-secondary);">Today, 10:45 AM</div>
+              </div>
+              <span class="chip green">Reviewed</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="font-size:24px;">🏃</span>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:600;">Shuttle Run</div>
+                <div style="font-size:12px;color:var(--text-secondary);">Yesterday, 4:30 PM</div>
+              </div>
+              <span class="chip blue">AI Analyzed</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+              <span style="font-size:24px;">🏅</span>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:600;">Speed Demon Badge</div>
+                <div style="font-size:12px;color:var(--text-secondary);">2 days ago</div>
+              </div>
+              <span class="chip gold">Earned</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELECT SPORT -->
+    <div id="p-sports" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Select Sport</div>
+        <div class="page-sub">Choose your primary sport to customize your training program</div></div>
+      </div>
+      <div class="sports-grid">
+        <div class="sport-card selected" onclick="selectSport(this)">
+          <div class="selected-badge">✓</div>
+          <span class="sport-emoji">🏏</span>
+          <div class="sport-name">Cricket</div>
+          <div class="sport-events">Batting · Bowling · Fielding</div>
+        </div>
+        <div class="sport-card" onclick="selectSport(this)">
+          <div class="selected-badge">✓</div>
+          <span class="sport-emoji">⚽</span>
+          <div class="sport-name">Football</div>
+          <div class="sport-events">Speed · Agility · Endurance</div>
+        </div>
+        <div class="sport-card" onclick="selectSport(this)">
+          <div class="selected-badge">✓</div>
+          <span class="sport-emoji">🏀</span>
+          <div class="sport-name">Basketball</div>
+          <div class="sport-events">Jump · Dribble · Shoot</div>
+        </div>
+        <div class="sport-card" onclick="selectSport(this)">
+          <div class="selected-badge">✓</div>
+          <span class="sport-emoji">🏃</span>
+          <div class="sport-name">Athletics</div>
+          <div class="sport-events">Sprint · Hurdles · Long Jump</div>
+        </div>
+        <div class="sport-card" onclick="selectSport(this)">
+          <div class="selected-badge">✓</div>
+          <span class="sport-emoji">🏊</span>
+          <div class="sport-name">Swimming</div>
+          <div class="sport-events">Freestyle · Backstroke · Butterfly</div>
+        </div>
+        <div class="sport-card" onclick="selectSport(this)">
+          <div class="selected-badge">✓</div>
+          <span class="sport-emoji">🏸</span>
+          <div class="sport-name">Badminton</div>
+          <div class="sport-events">Singles · Doubles · Mixed</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="max-width:280px;" onclick="showPage('p-tests',null)">Confirm Selection →</button>
+    </div>
+
+    <!-- FITNESS TESTS -->
+    <div id="p-tests" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Fitness Tests</div>
+        <div class="page-sub">Complete all tests for a comprehensive performance score</div></div>
+        <div class="page-actions">
+          <div class="chip blue">Cricket Mode</div>
+        </div>
+      </div>
+      <div class="alert-bar">
+        <span>ℹ️</span> Complete at least 4 tests to get your AI Performance Report
+      </div>
+      <div class="test-grid">
+        <div class="test-card" onclick="showPage('p-record',null)">
+          <div class="test-status done">✓ Done</div>
+          <div class="test-icon">⬆️</div>
+          <div class="test-name">Vertical Jump</div>
+          <div class="test-desc">Measures explosive leg power. Stand flat, jump as high as possible without run-up.</div>
+          <div class="test-meta">
+            <span class="test-tag">Legs</span>
+            <span class="test-tag green">Power</span>
+          </div>
+        </div>
+        <div class="test-card" onclick="showPage('p-record',null)">
+          <div class="test-status pending">Pending</div>
+          <div class="test-icon">🔄</div>
+          <div class="test-name">Shuttle Run</div>
+          <div class="test-desc">10m shuttle run × 5. Tests agility, acceleration and change of direction speed.</div>
+          <div class="test-meta">
+            <span class="test-tag">Agility</span>
+            <span class="test-tag green">Speed</span>
+          </div>
+        </div>
+        <div class="test-card" onclick="showPage('p-record',null)">
+          <div class="test-status done">✓ Done</div>
+          <div class="test-icon">💪</div>
+          <div class="test-name">Sit-Ups (1 min)</div>
+          <div class="test-desc">Maximum sit-ups in 60 seconds. Assesses core muscle strength and endurance.</div>
+          <div class="test-meta">
+            <span class="test-tag">Core</span>
+            <span class="test-tag green">Endurance</span>
+          </div>
+        </div>
+        <div class="test-card" onclick="showPage('p-record',null)">
+          <div class="test-status pending">Pending</div>
+          <div class="test-icon">🏃</div>
+          <div class="test-name">1600m Endurance Run</div>
+          <div class="test-desc">Run 1600 metres at best pace. Measures aerobic capacity and cardiovascular fitness.</div>
+          <div class="test-meta">
+            <span class="test-tag">Cardio</span>
+            <span class="test-tag green">VO2 Max</span>
+          </div>
+        </div>
+        <div class="test-card" onclick="showPage('p-record',null)">
+          <div class="test-status pending">Pending</div>
+          <div class="test-icon">🤸</div>
+          <div class="test-name">Flexibility (Sit & Reach)</div>
+          <div class="test-desc">Seated forward bend. Measures hamstring and lower back flexibility.</div>
+          <div class="test-meta">
+            <span class="test-tag">Flexibility</span>
+          </div>
+        </div>
+        <div class="test-card" onclick="showPage('p-record',null)">
+          <div class="test-status pending">Pending</div>
+          <div class="test-icon">🏋️</div>
+          <div class="test-name">Push-ups (1 min)</div>
+          <div class="test-desc">Maximum push-ups in 60 seconds. Evaluates upper body strength.</div>
+          <div class="test-meta">
+            <span class="test-tag">Upper Body</span>
+            <span class="test-tag green">Strength</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECORD TEST -->
+    <div id="p-record" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Record Test</div>
+        <div class="page-sub" id="record-sub">Vertical Jump — Choose how to submit your test</div></div>
+        <div class="page-actions"><span class="chip green" id="ai-status-chip">🤖 AI Ready</span></div>
+      </div>
+
+      <!-- MODE SELECTOR TABS -->
+      <div style="display:flex;gap:12px;margin-bottom:24px;">
+        <div id="mode-tab-camera" onclick="switchRecordMode('camera')"
+          style="flex:1;padding:18px 20px;border-radius:14px;cursor:pointer;transition:all 0.2s;
+            background:rgba(0,198,255,0.1);border:2px solid var(--accent-blue);
+            display:flex;align-items:center;gap:14px;">
+          <span style="font-size:32px;">📹</span>
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--accent-blue);">Live Camera</div>
+            <div style="font-size:12px;color:var(--text-secondary);">Record directly using your webcam</div>
+          </div>
+          <span style="margin-left:auto;width:18px;height:18px;border-radius:50%;
+            background:var(--accent-blue);display:flex;align-items:center;justify-content:center;
+            font-size:10px;font-weight:900;color:#000;" id="dot-camera">✓</span>
+        </div>
+        <div id="mode-tab-upload" onclick="switchRecordMode('upload')"
+          style="flex:1;padding:18px 20px;border-radius:14px;cursor:pointer;transition:all 0.2s;
+            background:var(--bg-card);border:2px solid var(--border);
+            display:flex;align-items:center;gap:14px;">
+          <span style="font-size:32px;">📁</span>
+          <div>
+            <div style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary);" id="upload-tab-title">Upload File</div>
+            <div style="font-size:12px;color:var(--text-muted);">Pick a video from your device</div>
+          </div>
+          <span style="margin-left:auto;width:18px;height:18px;border-radius:50%;
+            background:var(--bg-secondary);border:2px solid var(--border);display:flex;
+            align-items:center;justify-content:center;font-size:10px;" id="dot-upload"></span>
+        </div>
+      </div>
+
+      <!-- ══ CAMERA MODE ══ -->
+      <div id="camera-mode-panel">
+        <div class="recorder-area">
+          <div class="video-viewport" style="position:relative;background:#000;height:420px;">
+            <!-- Idle placeholder -->
+            <div id="cam-idle" style="position:absolute;inset:0;display:flex;flex-direction:column;
+              align-items:center;justify-content:center;gap:12px;">
+              <div style="font-size:64px;opacity:0.2;">📷</div>
+              <div style="color:var(--text-muted);font-size:15px;">Camera not started</div>
+              <div style="font-size:12px;color:var(--text-muted);opacity:0.7;">Click the ● button below to activate camera</div>
+            </div>
+            <!-- Live video element -->
+            <video id="live-video" autoplay muted playsinline
+              style="display:none;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>
+            <!-- Recorded video playback -->
+            <video id="playback-video" controls
+              style="display:none;width:100%;height:100%;object-fit:contain;background:#000;"></video>
+            <!-- AI overlay shown while live -->
+            <div id="live-overlay" style="display:none;position:absolute;inset:0;pointer-events:none;">
+              <!-- Pose skeleton guide -->
+              <svg style="position:absolute;inset:0;width:100%;height:100%;" id="pose-svg">
+                <defs>
+                  <filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                </defs>
+                <!-- Body guide outline -->
+                <rect x="38%" y="8%" width="24%" height="84%" rx="12"
+                  fill="none" stroke="rgba(0,198,255,0.18)" stroke-width="1.5" stroke-dasharray="6 4"/>
+                <!-- Skeleton lines - head -->
+                <circle cx="50%" cy="18%" r="5%" fill="none" stroke="rgba(0,255,157,0.5)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Torso -->
+                <line x1="50%" y1="23%" x2="50%" y2="55%" stroke="rgba(0,255,157,0.45)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Shoulders -->
+                <line x1="35%" y1="28%" x2="65%" y2="28%" stroke="rgba(0,255,157,0.45)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Left arm -->
+                <line x1="35%" y1="28%" x2="28%" y2="46%" stroke="rgba(0,255,157,0.4)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Right arm -->
+                <line x1="65%" y1="28%" x2="72%" y2="46%" stroke="rgba(0,255,157,0.4)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Hips -->
+                <line x1="41%" y1="55%" x2="59%" y2="55%" stroke="rgba(0,255,157,0.45)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Left leg -->
+                <line x1="41%" y1="55%" x2="38%" y2="78%" stroke="rgba(0,255,157,0.4)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <line x1="38%" y1="78%" x2="36%" y2="92%" stroke="rgba(0,255,157,0.35)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Right leg -->
+                <line x1="59%" y1="55%" x2="62%" y2="78%" stroke="rgba(0,255,157,0.4)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <line x1="62%" y1="78%" x2="64%" y2="92%" stroke="rgba(0,255,157,0.35)" stroke-width="1.5" filter="url(#glow)" class="skel-anim"/>
+                <!-- Joint dots -->
+                <circle cx="35%" cy="28%" r="2.5" fill="rgba(0,255,157,0.7)" class="skel-anim"/>
+                <circle cx="65%" cy="28%" r="2.5" fill="rgba(0,255,157,0.7)" class="skel-anim"/>
+                <circle cx="50%" cy="55%" r="2.5" fill="rgba(0,255,157,0.7)" class="skel-anim"/>
+                <circle cx="41%" cy="55%" r="2.5" fill="rgba(0,255,157,0.7)" class="skel-anim"/>
+                <circle cx="59%" cy="55%" r="2.5" fill="rgba(0,255,157,0.7)" class="skel-anim"/>
+                <circle cx="28%" cy="46%" r="2.5" fill="rgba(0,198,255,0.7)" class="skel-anim"/>
+                <circle cx="72%" cy="46%" r="2.5" fill="rgba(0,198,255,0.7)" class="skel-anim"/>
+                <circle cx="38%" cy="78%" r="2.5" fill="rgba(0,198,255,0.7)" class="skel-anim"/>
+                <circle cx="62%" cy="78%" r="2.5" fill="rgba(0,198,255,0.7)" class="skel-anim"/>
+              </svg>
+              <!-- Top bar -->
+              <div style="position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;">
+                <span class="ai-badge" style="font-size:11px;">🤖 AI Pose Detection ON</span>
+                <div id="rec-badge-live" style="display:none;background:rgba(255,77,109,0.25);backdrop-filter:blur(10px);
+                  border:1px solid rgba(255,77,109,0.5);border-radius:8px;padding:6px 12px;">
+                  <span style="color:var(--accent-red);font-size:12px;font-weight:700;animation:recPulse 1.5s infinite;">● REC</span>
+                </div>
+              </div>
+              <!-- Bottom bar -->
+              <div style="position:absolute;bottom:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-end;">
+                <div style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);
+                  border:1px solid var(--border);border-radius:8px;padding:8px 14px;">
+                  <div style="font-size:10px;color:var(--text-secondary);margin-bottom:2px;letter-spacing:1px;">DURATION</div>
+                  <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:var(--accent-green);" id="timer-display">00:00</div>
+                </div>
+                <div id="size-indicator" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);
+                  border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:none;">
+                  <div style="font-size:10px;color:var(--text-secondary);margin-bottom:2px;">SIZE</div>
+                  <div style="font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--accent-blue);" id="size-text">0 MB</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONTROLS -->
+          <div class="rec-controls" style="padding:20px 28px;">
+            <!-- Camera start / flip / stop -->
+            <div class="ctrl-btn" id="btn-flip" title="Flip Camera" onclick="flipCamera()" style="display:none;">🔄</div>
+            <div class="ctrl-btn" id="btn-cam-start" title="Start Camera" onclick="startCamera()"
+              style="width:58px;height:58px;background:rgba(0,198,255,0.1);border-color:var(--border-bright);font-size:22px;color:var(--accent-blue);">📷</div>
+            <div class="rec-btn" id="rec-btn" onclick="toggleRecording()" title="Start/Stop Recording" style="display:none;">⏺</div>
+            <div class="ctrl-btn" id="btn-cam-stop" title="Stop Camera" onclick="stopCamera()" style="display:none;font-size:16px;color:var(--accent-red);">⏻</div>
+            <div class="ctrl-btn" id="btn-retake" title="Retake" onclick="retake()" style="display:none;color:var(--accent-gold);">↩</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;" id="cam-hint">
+              <span style="font-size:12px;color:var(--text-muted);">Press 📷 to start camera</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recorded video ready panel -->
+        <div id="recorded-ready" style="display:none;margin-bottom:20px;">
+          <div class="alert-bar success">
+            <span>✅</span> Video recorded! Review it above, then submit for AI analysis.
+          </div>
+          <div style="display:flex;gap:12px;">
+            <button class="btn-primary" style="flex:1;" onclick="submitForAnalysis()">
+              🤖 Submit for AI Analysis
+            </button>
+            <button class="btn-primary" style="flex:0 0 auto;max-width:160px;
+              background:rgba(255,215,0,0.1);color:var(--accent-gold);
+              box-shadow:none;border:1px solid rgba(255,215,0,0.3);" onclick="retake()">
+              ↩ Retake
+            </button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">AI Guidance Checklist</div>
+            <div style="display:flex;flex-direction:column;gap:10px;" id="guidance-list">
+              <div style="display:flex;align-items:center;gap:10px;font-size:14px;" id="g1">
+                <span id="g1-icon" style="color:var(--text-muted);">○</span> Stand at least 2m from camera
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:14px;" id="g2">
+                <span id="g2-icon" style="color:var(--text-muted);">○</span> Full body visible in frame
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:14px;" id="g3">
+                <span id="g3-icon" style="color:var(--text-muted);">○</span> Ensure good lighting
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-muted);" id="g4">
+                <span id="g4-icon">○</span> Face side-profile to camera
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Cheat Detection</div>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="cheat-panel">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;">Run-up Detected</span>
+                <span class="chip blue" id="cd1">Waiting…</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;">Arm Swing Valid</span>
+                <span class="chip blue" id="cd2">Waiting…</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;">Landing Detected</span>
+                <span class="chip blue" id="cd3">Waiting…</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;">Pose Authenticity</span>
+                <span class="chip blue" id="cd4">Waiting…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ UPLOAD MODE ══ -->
+      <div id="upload-mode-panel" style="display:none;">
+        <!-- Hidden file input -->
+        <input type="file" id="video-file-input" accept="video/*" style="display:none;" onchange="handleVideoFile(event)">
+
+        <!-- Drop zone -->
+        <div id="drop-zone"
+          ondragover="event.preventDefault();this.style.borderColor='var(--accent-blue)';this.style.background='rgba(0,198,255,0.08)'"
+          ondragleave="this.style.borderColor='';this.style.background=''"
+          ondrop="handleDrop(event)"
+          onclick="document.getElementById('video-file-input').click()"
+          style="border:2px dashed var(--border);border-radius:var(--radius-lg);
+            padding:60px 40px;text-align:center;cursor:pointer;transition:all 0.25s;
+            background:rgba(0,198,255,0.02);margin-bottom:20px;">
+          <div style="font-size:64px;margin-bottom:18px;opacity:0.5;">📁</div>
+          <div style="font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;margin-bottom:8px;">
+            Drop your video here
+          </div>
+          <div style="color:var(--text-secondary);font-size:14px;margin-bottom:24px;line-height:1.6;">
+            or click to browse files from your device<br>
+            <span style="font-size:12px;color:var(--text-muted);">Supports MP4, MOV, AVI, WebM · Max 500 MB</span>
+          </div>
+          <div style="display:inline-flex;align-items:center;gap:8px;
+            background:rgba(0,198,255,0.1);border:1px solid rgba(0,198,255,0.3);
+            border-radius:10px;padding:12px 28px;font-weight:600;color:var(--accent-blue);font-size:14px;">
+            📂 Browse Files
+          </div>
+        </div>
+
+        <!-- File preview (hidden until file selected) -->
+        <div id="upload-preview" style="display:none;">
+          <div class="alert-bar success" id="upload-alert">
+            <span>✅</span> <span id="upload-filename">video.mp4</span> ready — <span id="upload-filesize"></span>
+          </div>
+          <!-- Video preview player -->
+          <div style="background:var(--bg-card);border:1px solid var(--border);
+            border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;">
+            <div style="padding:12px 18px;border-bottom:1px solid var(--border);
+              display:flex;align-items:center;gap:10px;">
+              <span style="font-size:18px;">🎬</span>
+              <span style="font-size:14px;font-weight:600;" id="preview-label">Preview</span>
+              <span class="chip green" style="margin-left:auto;">Ready to Submit</span>
+            </div>
+            <video id="upload-video-preview" controls
+              style="width:100%;max-height:380px;background:#000;display:block;"></video>
+            <div style="padding:14px 18px;border-top:1px solid var(--border);
+              display:flex;gap:16px;font-size:13px;color:var(--text-secondary);">
+              <span>🕐 Duration: <strong id="up-duration" style="color:var(--text-primary);">—</strong></span>
+              <span>📐 Resolution: <strong id="up-res" style="color:var(--text-primary);">—</strong></span>
+              <span>📦 Size: <strong id="up-size" style="color:var(--text-primary);">—</strong></span>
+              <span>🎞️ Format: <strong id="up-format" style="color:var(--text-primary);">—</strong></span>
+            </div>
+          </div>
+
+          <!-- Upload progress bar (hidden until submit) -->
+          <div id="upload-progress-wrap" style="display:none;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;">
+              <span style="color:var(--accent-blue);">⬆ Uploading to server…</span>
+              <span id="progress-pct" style="font-weight:700;color:var(--accent-green);">0%</span>
+            </div>
+            <div style="height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;">
+              <div id="progress-bar-fill" style="height:100%;width:0%;border-radius:4px;
+                background:linear-gradient(90deg,var(--accent-blue),var(--accent-green));
+                transition:width 0.3s ease;"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;">
+            <button class="btn-primary" style="flex:1;" id="submit-upload-btn" onclick="submitUploadedVideo()">
+              🤖 Analyse with AI
+            </button>
+            <button class="btn-primary" style="flex:0 0 auto;max-width:160px;
+              background:rgba(255,77,109,0.1);color:var(--accent-red);
+              box-shadow:none;border:1px solid rgba(255,77,109,0.2);"
+              onclick="clearUpload()">
+              🗑 Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Info cards below -->
+        <div class="grid-2" style="margin-top:24px;">
+          <div class="card">
+            <div class="card-title">Accepted Formats</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="chip green">MP4</span> Best quality & compatibility
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="chip blue">MOV</span> iPhone / iPad recordings
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="chip gold">WebM</span> Android / Chrome recordings
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="chip purple">AVI</span> Windows camera recordings
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Upload Tips</div>
+            <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;color:var(--text-secondary);">
+              <div>📏 Full body must be visible in the frame</div>
+              <div>💡 Record in good lighting — avoid shadows</div>
+              <div>🎯 Keep camera steady or use a tripod</div>
+              <div>⏱ Video should be 5–60 seconds long</div>
+              <div>📶 Saved locally if offline, syncs when online</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI RESULTS -->
+    <div id="p-results" class="page">
+      <div class="page-header">
+        <div><div class="page-title">AI Analysis Results</div>
+        <div class="page-sub">Vertical Jump Test · Analyzed 2 mins ago</div></div>
+        <div class="page-actions">
+          <button class="btn-sm primary">📤 Share</button>
+          <button class="btn-sm green">💾 Save</button>
+        </div>
+      </div>
+      <div class="result-hero">
+        <div class="result-rating">
+          <span class="rating-emoji">🏆</span>
+          <span class="rating-text">EXCELLENT PERFORMANCE</span>
+        </div>
+        <div class="result-score">82.5</div>
+        <div class="result-label">Overall Score out of 100</div>
+        <div style="margin-top:16px;display:flex;gap:16px;justify-content:center;">
+          <span class="chip green">Above Average</span>
+          <span class="chip gold">Top 15% Age Group</span>
+          <span class="chip blue">AI Verified</span>
+        </div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">📏</div>
+          <div class="metric-value" style="color:var(--accent-green);">62 cm</div>
+          <div class="metric-label">Jump Height</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">⏱️</div>
+          <div class="metric-value" style="color:var(--accent-blue);">0.71s</div>
+          <div class="metric-label">Air Time</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">💥</div>
+          <div class="metric-value" style="color:var(--accent-gold);">4.8 W/kg</div>
+          <div class="metric-label">Power Index</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Benchmark Comparison</div>
+          <div style="margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
+            Male · 18–22 yrs · Cricket Player
+          </div>
+          <div class="divider" style="margin:12px 0;"></div>
+          <div class="progress-bar-wrap">
+            <div class="progress-label-row">
+              <span>Your Jump (62cm)</span>
+              <span style="color:var(--accent-green);">Top 15%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width:85%"></div></div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-label-row">
+              <span>Average (52cm)</span><span style="color:var(--text-secondary);">50th %ile</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width:60%;opacity:0.4"></div></div>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-label-row">
+              <span>Elite (75cm)</span><span style="color:var(--accent-gold);">Top 5%</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" style="width:100%;opacity:0.2"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">AI Feedback</div>
+          <div class="feedback-box">
+            Your explosive power is strong — 62cm is in the top 15% for your age group. Your arm swing technique is excellent. Focus on deeper knee bend during take-off to potentially gain another 4–6cm. Your landing mechanics are safe with good knee alignment.
+          </div>
+          <div style="margin-top:16px;">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Areas to Improve:</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="chip blue">Knee Bend</span>
+              <span class="chip blue">Take-off Angle</span>
+              <span class="chip gold">Consistency</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:20px;">
+        <div class="card-title">Coach Review Status</div>
+        <div style="display:flex;align-items:center;gap:16px;padding:12px 0;">
+          <span style="font-size:36px;">👨‍🏫</span>
+          <div style="flex:1">
+            <div style="font-weight:600;margin-bottom:3px;">Coach Rahul Singh</div>
+            <div style="font-size:13px;color:var(--text-secondary);">Your video has been submitted for review</div>
+          </div>
+          <span class="chip green">Reviewed ✓</span>
+        </div>
+        <div class="feedback-box" style="border-left-color:var(--accent-green);">
+          "Great jump Arjun! Your power is impressive. Work on your ankle dorsiflexion before take-off — this will give you more spring. Try plyometric training 3x per week."
+        </div>
+      </div>
+    </div>
+
+    <!-- SEND TO COACH -->
+    <div id="p-send-coach" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Send to Coach</div>
+        <div class="page-sub">Submit your recorded video to a coach for expert review</div></div>
+        <div class="page-actions"><span class="chip green">🤖 AI Pre-scored</span></div>
+      </div>
+
+      <!-- STEP 1: Select Coach -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Step 1 — Choose a Coach</div>
+        <div id="coach-list-container" style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <!-- Coaches injected dynamically; placeholders shown when no coach registered -->
+          <div class="coach-select-row" onclick="selectCoach(this,'coach-demo-1','Rahul Singh','Cricket')"
+            style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+            background:var(--bg-secondary);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(0,198,255,0.2),rgba(0,255,157,0.2));
+              border:2px solid var(--border-bright);display:flex;align-items:center;justify-content:center;
+              font-weight:700;font-size:16px;flex-shrink:0;">RS</div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:14px;">Rahul Singh</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Cricket · ⭐ 4.9 · 47 reviews</div>
+            </div>
+            <span class="chip blue">Available</span>
+            <span class="coach-check" style="font-size:20px;color:var(--accent-green);display:none;">✓</span>
+          </div>
+          <div class="coach-select-row" onclick="selectCoach(this,'coach-demo-2','Sneha Patel','Athletics')"
+            style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+            background:var(--bg-secondary);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(0,198,255,0.2));
+              border:2px solid rgba(168,85,247,0.4);display:flex;align-items:center;justify-content:center;
+              font-weight:700;font-size:16px;flex-shrink:0;">SP</div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:14px;">Sneha Patel</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Athletics · ⭐ 4.7 · 31 reviews</div>
+            </div>
+            <span class="chip blue">Available</span>
+            <span class="coach-check" style="font-size:20px;color:var(--accent-green);display:none;">✓</span>
+          </div>
+          <!-- Dynamic registered coaches injected here -->
+          <div id="registered-coaches-list"></div>
+        </div>
+        <div id="no-coach-msg" style="display:none;padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">
+          No additional coaches registered yet.
+        </div>
+      </div>
+
+      <!-- STEP 2: Select Video -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Step 2 — Select Video to Send</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;" id="send-video-list">
+          <div class="video-select-row" onclick="selectVideoToSend(this,'Vertical Jump Test')"
+            style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+            background:var(--bg-secondary);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">
+            <span style="font-size:32px;">🎥</span>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:14px;">Vertical Jump Test</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Recorded today · AI Score: 82.5 · 00:45</div>
+            </div>
+            <span class="chip green">AI Scored</span>
+            <span class="video-check" style="font-size:20px;color:var(--accent-green);display:none;">✓</span>
+          </div>
+          <div class="video-select-row" onclick="selectVideoToSend(this,'Shuttle Run Test')"
+            style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+            background:var(--bg-secondary);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;">
+            <span style="font-size:32px;">🎥</span>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:14px;">Shuttle Run Test</div>
+              <div style="font-size:12px;color:var(--text-secondary);">2 days ago · AI Score: 76.0 · 01:12</div>
+            </div>
+            <span class="chip gold">Pending Review</span>
+            <span class="video-check" style="font-size:20px;color:var(--accent-green);display:none;">✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Message -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Step 3 — Add a Message (Optional)</div>
+        <textarea id="send-coach-message" class="form-input" rows="3"
+          style="resize:vertical;min-height:80px;margin-top:4px;"
+          placeholder="e.g. Please check my take-off technique and knee bend..."></textarea>
+      </div>
+
+      <!-- Send Button -->
+      <button class="btn-primary" onclick="sendVideoToCoach()" style="max-width:320px;">
+        📤 Send Video to Coach
+      </button>
+
+      <!-- Sent History -->
+      <div class="card" style="margin-top:24px;">
+        <div class="card-title">Sent History</div>
+        <div id="sent-history-list" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+          <div style="padding:14px;background:var(--bg-secondary);border-radius:10px;display:flex;align-items:center;gap:12px;">
+            <span style="font-size:24px;">✅</span>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:13px;">Vertical Jump Test → Coach Rahul Singh</div>
+              <div style="font-size:12px;color:var(--text-secondary);">Sent 2 days ago · Reviewed ✓</div>
+            </div>
+            <span class="chip green">Reviewed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div id="p-leaderboard" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Leaderboard</div>
+        <div class="page-sub">Top performers this month across all sports</div></div>
+        <div class="page-actions">
+          <select style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);
+            padding:8px 14px;border-radius:8px;font-family:'Exo 2',sans-serif;cursor:pointer;outline:none;">
+            <option>All Sports</option><option>Cricket</option><option>Football</option>
+          </select>
+        </div>
+      </div>
+      <div class="leaderboard-list">
+        <div class="lb-item">
+          <div class="lb-rank gold">1</div>
+          <div class="lb-avatar">🏆</div>
+          <div style="flex:1">
+            <div class="lb-name">Priya Nair</div>
+            <div class="lb-sport">Athletics · Sprinter</div>
+          </div>
+          <div class="lb-score">96.2</div>
+        </div>
+        <div class="lb-item">
+          <div class="lb-rank silver">2</div>
+          <div class="lb-avatar">🥈</div>
+          <div style="flex:1">
+            <div class="lb-name">Karan Mehta</div>
+            <div class="lb-sport">Football · Midfielder</div>
+          </div>
+          <div class="lb-score">93.8</div>
+        </div>
+        <div class="lb-item">
+          <div class="lb-rank bronze">3</div>
+          <div class="lb-avatar">🥉</div>
+          <div style="flex:1">
+            <div class="lb-name">Ananya Patel</div>
+            <div class="lb-sport">Basketball · Guard</div>
+          </div>
+          <div class="lb-score">91.5</div>
+        </div>
+        <div class="lb-item" style="opacity:0.6">
+          <div class="lb-rank">...</div>
+          <div class="lb-avatar" style="font-size:12px;font-weight:700;color:var(--text-muted)">...</div>
+          <div style="flex:1"></div>
+          <div></div>
+        </div>
+        <div class="lb-item me">
+          <div class="lb-rank" style="color:var(--accent-green)">47</div>
+          <div class="lb-avatar" style="border-color:rgba(0,255,157,0.4);">AS</div>
+          <div style="flex:1">
+            <div class="lb-name">Arjun Sharma <span class="chip green" style="font-size:10px;">YOU</span></div>
+            <div class="lb-sport">Cricket · Batsman</div>
+          </div>
+          <div class="lb-score" style="color:var(--accent-green);">78.4</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BADGES -->
+    <div id="p-badges" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Achievements</div>
+        <div class="page-sub">7 badges earned · 5 locked</div></div>
+      </div>
+      <div class="badges-grid">
+        <div class="badge-card earned">
+          <div class="badge-icon">🚀</div>
+          <div class="badge-name">Speed Demon</div>
+          <div class="badge-desc">Top 20% shuttle run</div>
+        </div>
+        <div class="badge-card earned">
+          <div class="badge-icon">💪</div>
+          <div class="badge-name">Iron Core</div>
+          <div class="badge-desc">50+ sit-ups in 60s</div>
+        </div>
+        <div class="badge-card earned">
+          <div class="badge-icon">🔥</div>
+          <div class="badge-name">5-Day Streak</div>
+          <div class="badge-desc">Train 5 days straight</div>
+        </div>
+        <div class="badge-card earned">
+          <div class="badge-icon">⬆️</div>
+          <div class="badge-name">Sky High</div>
+          <div class="badge-desc">Jump over 60cm</div>
+        </div>
+        <div class="badge-card earned">
+          <div class="badge-icon">🏆</div>
+          <div class="badge-name">Top 50</div>
+          <div class="badge-desc">Enter top 50 ranking</div>
+        </div>
+        <div class="badge-card earned">
+          <div class="badge-icon">📹</div>
+          <div class="badge-name">First Record</div>
+          <div class="badge-desc">Record first video test</div>
+        </div>
+        <div class="badge-card earned">
+          <div class="badge-icon">🤖</div>
+          <div class="badge-name">AI Ally</div>
+          <div class="badge-desc">5 AI-analyzed tests</div>
+        </div>
+        <div class="badge-card">
+          <div class="badge-icon">🥇</div>
+          <div class="badge-name">Top 10</div>
+          <div class="badge-desc">Reach top 10 globally</div>
+        </div>
+        <div class="badge-card">
+          <div class="badge-icon">📅</div>
+          <div class="badge-name">Monthly Best</div>
+          <div class="badge-desc">Best score in a month</div>
+        </div>
+        <div class="badge-card">
+          <div class="badge-icon">🏅</div>
+          <div class="badge-name">Perfect Score</div>
+          <div class="badge-desc">Score 95+ in any test</div>
+        </div>
+        <div class="badge-card">
+          <div class="badge-icon">🌟</div>
+          <div class="badge-name">All-Rounder</div>
+          <div class="badge-desc">Complete all 6 tests</div>
+        </div>
+        <div class="badge-card">
+          <div class="badge-icon">💡</div>
+          <div class="badge-name">Scholar</div>
+          <div class="badge-desc">Apply for scholarship</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHYSIO -->
+    <div id="p-physio" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Physiotherapist</div>
+        <div class="page-sub">Book a consultation or get injury tips</div></div>
+      </div>
+      <div class="alert-bar warning">
+        <span>⚠️</span> If you have an acute injury, please seek immediate medical attention
+      </div>
+      <div class="section-title">Available Physiotherapists</div>
+      <div class="physio-cards">
+        <div class="physio-card">
+          <div class="physio-avatar">👨‍⚕️</div>
+          <div class="physio-name">Dr. Suresh Iyer</div>
+          <div class="physio-spec">Sports Rehab · 12 yrs exp</div>
+          <div class="physio-rating">⭐⭐⭐⭐⭐ 4.9</div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <span class="chip blue">Knee Injuries</span>
+            <span class="chip blue">Cricket</span>
+          </div>
+          <button class="btn-sm primary" style="width:100%;">Book Consultation</button>
+        </div>
+        <div class="physio-card">
+          <div class="physio-avatar">👩‍⚕️</div>
+          <div class="physio-name">Dr. Meena Kapoor</div>
+          <div class="physio-spec">Biomechanics · 8 yrs exp</div>
+          <div class="physio-rating">⭐⭐⭐⭐⭐ 4.8</div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <span class="chip green">Running Gait</span>
+            <span class="chip green">Athletics</span>
+          </div>
+          <button class="btn-sm green" style="width:100%;">Book Consultation</button>
+        </div>
+        <div class="physio-card">
+          <div class="physio-avatar">👨‍⚕️</div>
+          <div class="physio-name">Dr. Amit Bose</div>
+          <div class="physio-spec">Injury Prevention · 15 yrs</div>
+          <div class="physio-rating">⭐⭐⭐⭐⭐ 5.0</div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <span class="chip purple">Football</span>
+            <span class="chip gold">Olympic Exp</span>
+          </div>
+          <button class="btn-sm primary" style="width:100%;">Book Consultation</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-title">Injury Tips</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Hamstring Strain</div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+            Apply ice for 20 mins every 2 hours in first 48 hours. Avoid stretching immediately. 
+            Gentle walking is okay if pain is 3/10 or less. Consult if pain is severe.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Knee Pain (Patellar)</div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+            Rest from jumping activities. Strengthen VMO with quad sets. 
+            Foam roll quad and IT band daily. Avoid squatting below 90°.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNDING -->
+    <div id="p-funding" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Scholarships & Funding</div>
+        <div class="page-sub">Apply for sports scholarships and sponsorships</div></div>
+      </div>
+      <div class="funding-cards">
+        <div class="funding-card">
+          <div class="funding-logo">🏛️</div>
+          <div class="funding-name">Sports Authority of India</div>
+          <div class="funding-amount">₹50,000 – ₹2,00,000 / year</div>
+          <div class="funding-desc">TOPS (Target Olympic Podium Scheme) supports elite athletes with funding for training, equipment and international exposure.</div>
+          <div class="funding-tags">
+            <span class="chip blue">Cricket</span>
+            <span class="chip blue">Athletics</span>
+            <span class="chip green">Open Now</span>
+          </div>
+          <button class="btn-sm primary" style="width:100%;">Apply Now →</button>
+        </div>
+        <div class="funding-card">
+          <div class="funding-logo">🎽</div>
+          <div class="funding-name">Nike Next Champions</div>
+          <div class="funding-amount">Equipment + ₹80,000 stipend</div>
+          <div class="funding-desc">Nike supports undiscovered talent from rural India with full kit sponsorship and inclusion in training camps.</div>
+          <div class="funding-tags">
+            <span class="chip gold">All Sports</span>
+            <span class="chip green">Open Now</span>
+          </div>
+          <button class="btn-sm green" style="width:100%;">Apply Now →</button>
+        </div>
+        <div class="funding-card">
+          <div class="funding-logo">🏫</div>
+          <div class="funding-name">State Sports University</div>
+          <div class="funding-amount">Full Tuition Waiver</div>
+          <div class="funding-desc">Merit-based sports scholarship with full tuition waiver for students demonstrating exceptional athletic performance in state trials.</div>
+          <div class="funding-tags">
+            <span class="chip purple">Education</span>
+            <span class="chip red">Closes Soon</span>
+          </div>
+          <button class="btn-sm primary" style="width:100%;">Apply Now →</button>
+        </div>
+        <div class="funding-card">
+          <div class="funding-logo">💼</div>
+          <div class="funding-name">Reliance Foundation</div>
+          <div class="funding-amount">₹25,000 + Coaching</div>
+          <div class="funding-desc">Reliance Foundation Youth Sports supports grassroots athletes with financial aid and access to professional coaching.</div>
+          <div class="funding-tags">
+            <span class="chip blue">Football</span>
+            <span class="chip blue">Cricket</span>
+            <span class="chip green">Open Now</span>
+          </div>
+          <button class="btn-sm green" style="width:100%;">Apply Now →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATABASE SCHEMA -->
+    <div id="p-database" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Database Schema</div>
+        <div class="page-sub">Complete backend data model for Sports Talent AI</div></div>
+        <div class="page-actions">
+          <span class="chip blue">PostgreSQL</span>
+          <span class="chip green">Supabase / Firebase</span>
+        </div>
+      </div>
+      <div class="alert-bar">
+        <span>🗄️</span> <strong>Video Storage:</strong> Videos stored in <strong>Supabase Storage / AWS S3</strong>. DB stores metadata + signed URLs only.
+      </div>
+
+      <!-- USERS TABLE -->
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="table-icon">👤</span>
+          <span class="table-name">users</span>
+          <span class="table-desc">Core authentication table</span>
+        </div>
+        <div class="db-fields">
+          <div class="db-field"><span class="field-key">PK</span><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note">auto-generated</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">email</span><span class="field-type">VARCHAR(255)</span><span class="field-note">UNIQUE, NOT NULL</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">password_hash</span><span class="field-type">TEXT</span><span class="field-note">bcrypt hashed</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">role</span><span class="field-type">ENUM</span><span class="field-note">'player' | 'coach' | 'physio'</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">full_name</span><span class="field-type">VARCHAR(100)</span><span class="field-note">NOT NULL</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">avatar_url</span><span class="field-type">TEXT</span><span class="field-note">storage bucket URL</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">is_active</span><span class="field-type">BOOLEAN</span><span class="field-note">default TRUE</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">created_at</span><span class="field-type">TIMESTAMP</span><span class="field-note">default NOW()</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">last_seen</span><span class="field-type">TIMESTAMP</span><span class="field-note">updated on login</span></div>
+        </div>
+      </div>
+
+      <!-- PLAYERS TABLE -->
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="table-icon">🏃</span>
+          <span class="table-name">player_profiles</span>
+          <span class="table-desc">Extended player data</span>
+        </div>
+        <div class="db-fields">
+          <div class="db-field"><span class="field-key">PK</span><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note"></span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">user_id</span><span class="field-type">UUID</span><span class="field-note">→ users.id</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">date_of_birth</span><span class="field-type">DATE</span><span class="field-note">for benchmark grouping</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">gender</span><span class="field-type">ENUM</span><span class="field-note">'male' | 'female' | 'other'</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">height_cm</span><span class="field-type">DECIMAL(5,1)</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">weight_kg</span><span class="field-type">DECIMAL(5,1)</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">primary_sport</span><span class="field-type">VARCHAR(50)</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">position</span><span class="field-type">VARCHAR(50)</span><span class="field-note">e.g. Batsman, Goalkeeper</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">state</span><span class="field-type">VARCHAR(50)</span><span class="field-note">for regional leaderboards</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">overall_rank</span><span class="field-type">INTEGER</span><span class="field-note">computed, cached</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">streak_days</span><span class="field-type">INTEGER</span><span class="field-note">default 0</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">assigned_coach_id</span><span class="field-type">UUID</span><span class="field-note">→ coach_profiles.id</span></div>
+        </div>
+      </div>
+
+      <!-- COACHES TABLE -->
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="table-icon">📋</span>
+          <span class="table-name">coach_profiles</span>
+          <span class="table-desc">Coach-specific data</span>
+        </div>
+        <div class="db-fields">
+          <div class="db-field"><span class="field-key">PK</span><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note"></span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">user_id</span><span class="field-type">UUID</span><span class="field-note">→ users.id</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">specialization</span><span class="field-type">TEXT[]</span><span class="field-note">array of sports</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">years_experience</span><span class="field-type">INTEGER</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">certification</span><span class="field-type">VARCHAR(100)</span><span class="field-note">e.g. NIS, SAI</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">consultation_rate</span><span class="field-type">DECIMAL(8,2)</span><span class="field-note">INR per session</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">total_earnings</span><span class="field-type">DECIMAL(10,2)</span><span class="field-note">cumulative</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">rating</span><span class="field-type">DECIMAL(2,1)</span><span class="field-note">avg from reviews</span></div>
+        </div>
+      </div>
+
+      <!-- VIDEOS TABLE -->
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="table-icon">🎥</span>
+          <span class="table-name">test_videos</span>
+          <span class="table-desc">📦 Video metadata + Storage bucket reference</span>
+        </div>
+        <div class="db-fields">
+          <div class="db-field"><span class="field-key">PK</span><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note"></span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">player_id</span><span class="field-type">UUID</span><span class="field-note">→ player_profiles.id</span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">test_type_id</span><span class="field-type">UUID</span><span class="field-note">→ test_types.id</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">storage_bucket</span><span class="field-type">VARCHAR(50)</span><span class="field-note">'test-videos' bucket name</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">storage_path</span><span class="field-type">TEXT</span><span class="field-note">players/{id}/tests/{uuid}.mp4</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">signed_url</span><span class="field-type">TEXT</span><span class="field-note">expires in 1hr, regenerated on access</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">thumbnail_path</span><span class="field-type">TEXT</span><span class="field-note">auto-generated frame</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">duration_sec</span><span class="field-type">DECIMAL(5,1)</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">file_size_mb</span><span class="field-type">DECIMAL(6,2)</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">resolution</span><span class="field-type">VARCHAR(20)</span><span class="field-note">e.g. 1280x720</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">upload_status</span><span class="field-type">ENUM</span><span class="field-note">'pending'|'uploading'|'done'|'failed'</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">is_offline_pending</span><span class="field-type">BOOLEAN</span><span class="field-note">for offline sync queue</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">recorded_at</span><span class="field-type">TIMESTAMP</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">uploaded_at</span><span class="field-type">TIMESTAMP</span><span class="field-note">null until upload complete</span></div>
+        </div>
+      </div>
+
+      <!-- AI RESULTS TABLE -->
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="table-icon">🤖</span>
+          <span class="table-name">ai_analysis_results</span>
+          <span class="table-desc">AI pose detection + scoring output</span>
+        </div>
+        <div class="db-fields">
+          <div class="db-field"><span class="field-key">PK</span><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note"></span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">video_id</span><span class="field-type">UUID</span><span class="field-note">→ test_videos.id</span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">player_id</span><span class="field-type">UUID</span><span class="field-note">→ player_profiles.id</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">overall_score</span><span class="field-type">DECIMAL(5,2)</span><span class="field-note">0–100</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">rating</span><span class="field-type">ENUM</span><span class="field-note">'excellent'|'average'|'needs_improvement'</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">metrics_json</span><span class="field-type">JSONB</span><span class="field-note">{jump_height, air_time, power_index,...}</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">pose_keypoints</span><span class="field-type">JSONB</span><span class="field-note">17 body keypoints array</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">benchmark_percentile</span><span class="field-type">INTEGER</span><span class="field-note">vs age+gender group</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">ai_feedback_text</span><span class="field-type">TEXT</span><span class="field-note">generated feedback</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">cheat_flags</span><span class="field-type">JSONB</span><span class="field-note">{runup: false, valid_pose: true,...}</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">is_flagged</span><span class="field-type">BOOLEAN</span><span class="field-note">cheat detection triggered</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">model_version</span><span class="field-type">VARCHAR(20)</span><span class="field-note">AI model used</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">analyzed_at</span><span class="field-type">TIMESTAMP</span><span class="field-note"></span></div>
+        </div>
+      </div>
+
+      <!-- COACH FEEDBACK TABLE -->
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="table-icon">💬</span>
+          <span class="table-name">coach_feedback</span>
+          <span class="table-desc">Coach reviews on player videos</span>
+        </div>
+        <div class="db-fields">
+          <div class="db-field"><span class="field-key">PK</span><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note"></span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">video_id</span><span class="field-type">UUID</span><span class="field-note">→ test_videos.id</span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">coach_id</span><span class="field-type">UUID</span><span class="field-note">→ coach_profiles.id</span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">player_id</span><span class="field-type">UUID</span><span class="field-note">→ player_profiles.id</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">rating_score</span><span class="field-type">INTEGER</span><span class="field-note">1–5 stars</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">comments</span><span class="field-type">TEXT</span><span class="field-note">coach written feedback</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">video_timestamps</span><span class="field-type">JSONB</span><span class="field-note">[{time: 3.2, note: "..."}, ...]</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">is_reviewed</span><span class="field-type">BOOLEAN</span><span class="field-note">player has seen this</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">created_at</span><span class="field-type">TIMESTAMP</span><span class="field-note"></span></div>
+        </div>
+      </div>
+
+      <!-- OFFLINE SYNC TABLE -->
+      <div class="db-table">
+        <div class="db-table-header">
+          <span class="table-icon">📶</span>
+          <span class="table-name">offline_sync_queue</span>
+          <span class="table-desc">Pending uploads when offline</span>
+        </div>
+        <div class="db-fields">
+          <div class="db-field"><span class="field-key">PK</span><span class="field-name">id</span><span class="field-type">UUID</span><span class="field-note"></span></div>
+          <div class="db-field"><span class="field-fk">FK</span><span class="field-name">user_id</span><span class="field-type">UUID</span><span class="field-note">→ users.id</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">local_file_path</span><span class="field-type">TEXT</span><span class="field-note">local device path</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">intended_bucket_path</span><span class="field-type">TEXT</span><span class="field-note">target storage path</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">sync_status</span><span class="field-type">ENUM</span><span class="field-note">'queued'|'syncing'|'done'|'failed'</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">retry_count</span><span class="field-type">INTEGER</span><span class="field-note">default 0, max 5</span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">queued_at</span><span class="field-type">TIMESTAMP</span><span class="field-note"></span></div>
+          <div class="db-field"><span style="width:36px"></span><span class="field-name">synced_at</span><span class="field-type">TIMESTAMP</span><span class="field-note">null until done</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Storage Architecture</div>
+        <div style="font-size:14px;line-height:1.8;color:var(--text-secondary);">
+          <div style="margin-bottom:8px;"><span style="color:var(--accent-blue);font-family:'Share Tech Mono';">Bucket: test-videos</span> → stores all raw MP4/MOV files</div>
+          <div style="margin-bottom:8px;"><span style="color:var(--accent-green);font-family:'Share Tech Mono';">Path format:</span> <span style="font-family:'Share Tech Mono';">players/{player_uuid}/tests/{year}/{month}/{test_video_uuid}.mp4</span></div>
+          <div style="margin-bottom:8px;"><span style="color:var(--accent-gold);font-family:'Share Tech Mono';">Bucket: thumbnails</span> → auto-generated frame extracted via serverless function on upload</div>
+          <div style="margin-bottom:8px;"><span style="color:var(--accent-purple);font-family:'Share Tech Mono';">Access Policy:</span> Players can only read/write their own path. Coaches get read access to assigned player paths only.</div>
+          <div><span style="color:var(--accent-red);font-family:'Share Tech Mono';">Offline:</span> Videos recorded offline saved to local IndexedDB / device storage. Sync queue picks up on network reconnect.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-content player -->
+</div><!-- end player app -->
+
+<!-- ===== COACH APP ===== -->
+<div id="screen-coach-app" class="screen">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon" style="background:linear-gradient(135deg,#004488,#0088cc);">📋</div>
+      <div class="logo-text">Sports Talent AI<small>Coach Portal</small></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" style="border-color:rgba(0,198,255,0.5);">RS</div>
+      <div>
+        <div class="user-name">Rahul Singh</div>
+        <div class="user-role">Coach · Cricket</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Overview</div>
+        <div class="nav-item active" onclick="showCoachPage('c-dashboard',this)">
+          <span class="nav-icon">🏠</span> Dashboard
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Athletes</div>
+        <div class="nav-item" onclick="showCoachPage('c-athletes',this)">
+          <span class="nav-icon">👥</span> My Athletes
+          <span class="nav-badge">3</span>
+        </div>
+        <div class="nav-item" onclick="showCoachPage('c-inbox',this)">
+          <span class="nav-icon">📥</span> Video Inbox
+          <span class="nav-badge" id="coach-inbox-badge">0</span>
+        </div>
+        <div class="nav-item" onclick="showCoachPage('c-review',this)">
+          <span class="nav-icon">🎬</span> Video Review
+          <span class="nav-badge">5</span>
+        </div>
+        <div class="nav-item" onclick="showCoachPage('c-analytics',this)">
+          <span class="nav-icon">📈</span> Analytics
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Content</div>
+        <div class="nav-item" onclick="showCoachPage('c-plans',this)">
+          <span class="nav-icon">📝</span> Training Plans
+        </div>
+        <div class="nav-item" onclick="showCoachPage('c-drills',this)">
+          <span class="nav-icon">📤</span> Upload Drills
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Finance</div>
+        <div class="nav-item" onclick="showCoachPage('c-earnings',this)">
+          <span class="nav-icon">💳</span> Earnings
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="offline-indicator">
+        <div class="offline-dot"></div>
+        <span>Online · Synced</span>
+      </div>
+      <button class="btn-logout" onclick="goScreen('screen-landing')">⏻ Logout</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="mock-status-bar">
+      <span>Sports Talent AI — Coach Portal</span>
+      <div class="status-right">
+        <span>📶 Online</span>
+        <span>🔋 92%</span>
+      </div>
+    </div>
+
+    <!-- COACH DASHBOARD -->
+    <div id="c-dashboard" class="page active">
+      <div class="page-header">
+        <div><div class="page-title">Coach Dashboard</div>
+        <div class="page-sub">Welcome back, Coach Rahul! 5 pending reviews</div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon">👥</div>
+          <div class="stat-label">Athletes</div>
+          <div class="stat-value">12</div>
+          <div class="stat-change up">↑ +2 this month</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">🎬</div>
+          <div class="stat-label">Videos Reviewed</div>
+          <div class="stat-value">47</div>
+          <div class="stat-change up">↑ +8 this week</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Earnings (MTD)</div>
+          <div class="stat-value">₹18K</div>
+          <div class="stat-change up">↑ +₹4K</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-label">Rating</div>
+          <div class="stat-value">4.9</div>
+          <div class="stat-change up">↑ 23 reviews</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Pending Reviews</div>
+          <div class="athlete-list" style="gap:8px;">
+            <div class="athlete-row" onclick="showCoachPage('c-review',null)">
+              <div class="video-thumb">🎥<div class="play-overlay">▶</div></div>
+              <div class="athlete-info">
+                <div class="athlete-name">Arjun Sharma</div>
+                <div class="athlete-sport">Vertical Jump · 2h ago</div>
+              </div>
+              <span class="review-status new">NEW</span>
+            </div>
+            <div class="athlete-row" onclick="showCoachPage('c-review',null)">
+              <div class="video-thumb">🎥<div class="play-overlay">▶</div></div>
+              <div class="athlete-info">
+                <div class="athlete-name">Priya Nair</div>
+                <div class="athlete-sport">Shuttle Run · 5h ago</div>
+              </div>
+              <span class="review-status new">NEW</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top Athletes This Week</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+              <span class="lb-rank gold" style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;">1</span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;">Arjun Sharma</div><div style="font-size:12px;color:var(--text-secondary);">Cricket</div></div>
+              <span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--accent-blue);">82.5</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+              <span class="lb-rank silver" style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;">2</span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;">Ravi Kumar</div><div style="font-size:12px;color:var(--text-secondary);">Cricket</div></div>
+              <span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--accent-blue);">79.1</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+              <span class="lb-rank bronze" style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;">3</span>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px;">Sonal Desai</div><div style="font-size:12px;color:var(--text-secondary);">Cricket</div></div>
+              <span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--accent-blue);">76.3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEO INBOX (player submissions) -->
+    <div id="c-inbox" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Video Inbox</div>
+        <div class="page-sub" id="inbox-sub">Videos sent to you by players for review</div></div>
+        <div class="page-actions">
+          <span class="chip blue" id="inbox-count-chip">0 new</span>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="inbox-empty" style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+        <div style="font-size:56px;margin-bottom:16px;">📭</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);">No videos yet</div>
+        <div style="font-size:13px;">When players send you a video for review, it will appear here.</div>
+      </div>
+
+      <!-- Inbox list -->
+      <div id="inbox-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+    </div>
+
+    <!-- MY ATHLETES -->
+    <div id="c-athletes" class="page">
+      <div class="page-header">
+        <div><div class="page-title">My Athletes</div>
+        <div class="page-sub">12 athletes assigned to you</div></div>
+        <div class="page-actions">
+          <button class="btn-sm primary">+ Add Athlete</button>
+        </div>
+      </div>
+      <div class="athlete-list">
+        <div class="athlete-row">
+          <div class="lb-avatar">AS</div>
+          <div class="athlete-info">
+            <div class="athlete-name">Arjun Sharma</div>
+            <div class="athlete-sport">Cricket · Batsman · Age 20</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="chip green">Score: 82.5</span>
+            <span class="chip blue">5 Tests</span>
+            <span class="review-status new">2 Pending</span>
+          </div>
+        </div>
+        <div class="athlete-row">
+          <div class="lb-avatar">RK</div>
+          <div class="athlete-info">
+            <div class="athlete-name">Ravi Kumar</div>
+            <div class="athlete-sport">Cricket · Bowler · Age 22</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="chip green">Score: 79.1</span>
+            <span class="chip blue">8 Tests</span>
+            <span class="review-status reviewed">All Reviewed</span>
+          </div>
+        </div>
+        <div class="athlete-row">
+          <div class="lb-avatar">SD</div>
+          <div class="athlete-info">
+            <div class="athlete-name">Sonal Desai</div>
+            <div class="athlete-sport">Cricket · All-rounder · Age 19</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="chip gold">Score: 76.3</span>
+            <span class="chip blue">3 Tests</span>
+            <span class="review-status new">1 Pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEO REVIEW -->
+    <div id="c-review" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Video Review</div>
+        <div class="page-sub">Arjun Sharma — Vertical Jump Test</div></div>
+        <div class="page-actions"><span class="chip blue">AI Score: 82.5</span></div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <div class="recorder-area">
+            <div class="video-viewport" style="height:280px;">
+              <div class="camera-placeholder">
+                <div class="cam-icon">🎬</div>
+                <p>Athlete video playback<br><small style="font-size:11px;opacity:0.6;">Click play to review</small></p>
+              </div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                <div style="width:64px;height:64px;border-radius:50%;background:rgba(0,198,255,0.2);
+                  border:2px solid var(--accent-blue);display:flex;align-items:center;justify-content:center;
+                  font-size:26px;cursor:pointer;">▶</div>
+              </div>
+            </div>
+            <div style="padding:16px 20px;border-top:1px solid var(--border);
+              display:flex;align-items:center;gap:12px;">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--accent-green);">00:00</span>
+              <div style="flex:1;height:4px;background:var(--bg-secondary);border-radius:2px;cursor:pointer;">
+                <div style="width:0%;height:100%;background:var(--accent-blue);border-radius:2px;"></div>
+              </div>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text-secondary);">00:08</span>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px;">
+            <div class="card-title">AI Analysis Summary</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;">
+                <span style="font-size:13px;">Jump Height</span>
+                <span style="font-weight:700;color:var(--accent-green);">62 cm</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="font-size:13px;">Air Time</span>
+                <span style="font-weight:700;color:var(--accent-blue);">0.71s</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="font-size:13px;">Technique Score</span>
+                <span style="font-weight:700;color:var(--accent-gold);">87/100</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span style="font-size:13px;">Cheat Detection</span>
+                <span class="chip green">CLEAR ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title">Your Feedback</div>
+            <div style="margin-bottom:12px;">
+              <div class="form-label">Rating</div>
+              <div class="star-row" id="star-row">
+                <span onclick="setStars(1)" data-star="1">⭐</span>
+                <span onclick="setStars(2)" data-star="2">⭐</span>
+                <span onclick="setStars(3)" data-star="3">⭐</span>
+                <span onclick="setStars(4)" data-star="4">⭐</span>
+                <span onclick="setStars(5)" data-star="5">⭐</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Detailed Comments</label>
+              <textarea class="form-input" placeholder="Write your feedback for the athlete...">Great jump Arjun! Your power is impressive. Work on your ankle dorsiflexion before take-off — this will give you more spring. Try plyometric training 3x per week.</textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Areas to Improve (tags)</label>
+              <input class="form-input" placeholder="e.g. knee bend, landing mechanics" value="Knee Bend, Take-off Angle">
+            </div>
+            <button class="btn-primary" style="margin-bottom:12px;" onclick="alert('Feedback submitted successfully!')">Submit Feedback</button>
+            <button class="btn-primary" style="background:rgba(0,198,255,0.1);color:var(--accent-blue);
+              box-shadow:none;border:1px solid rgba(0,198,255,0.3);" onclick="showCoachPage('c-review',null)">
+              Next Video →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="c-analytics" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Performance Analytics</div>
+        <div class="page-sub">Squad overview and trends</div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-icon">📊</div><div class="stat-label">Avg Squad Score</div><div class="stat-value">74.6</div><div class="stat-change up">↑ +2.1 vs last month</div></div>
+        <div class="stat-card green"><div class="stat-icon">🎯</div><div class="stat-label">Tests This Week</div><div class="stat-value">23</div><div class="stat-change up">↑ +7</div></div>
+        <div class="stat-card gold"><div class="stat-icon">📈</div><div class="stat-label">Improvement Rate</div><div class="stat-value">68%</div><div class="stat-change up">↑ athletes improving</div></div>
+        <div class="stat-card purple"><div class="stat-icon">🏋️</div><div class="stat-label">Plans Followed</div><div class="stat-value">89%</div><div class="stat-change up">compliance rate</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Squad Performance by Test</div>
+        <div class="chart-bar-wrap">
+          <div class="chart-bar-item"><div class="chart-bar-label">Vertical Jump</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:78%"></div></div><div class="chart-bar-val">78</div></div>
+          <div class="chart-bar-item"><div class="chart-bar-label">Shuttle Run</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:72%"></div></div><div class="chart-bar-val">72</div></div>
+          <div class="chart-bar-item"><div class="chart-bar-label">Sit-ups</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:83%"></div></div><div class="chart-bar-val">83</div></div>
+          <div class="chart-bar-item"><div class="chart-bar-label">Endurance</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:65%"></div></div><div class="chart-bar-val">65</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAINING PLANS -->
+    <div id="c-plans" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Training Plans</div>
+        <div class="page-sub">Manage and assign drills to your athletes</div></div>
+        <div class="page-actions"><button class="btn-sm primary">+ Create Plan</button></div>
+      </div>
+      <div class="plan-list">
+        <div class="plan-item">
+          <div class="plan-num">01</div>
+          <div class="plan-info">
+            <div class="plan-name">Explosive Power Week</div>
+            <div class="plan-detail">Plyometrics · Box jumps · Depth jumps · Assigned to: 8 athletes</div>
+          </div>
+          <div class="plan-duration">7 days</div>
+          <span class="chip green">Active</span>
+        </div>
+        <div class="plan-item">
+          <div class="plan-num">02</div>
+          <div class="plan-info">
+            <div class="plan-name">Agility & Speed Circuit</div>
+            <div class="plan-detail">Cone drills · Ladder work · Sprint intervals · Assigned to: 12 athletes</div>
+          </div>
+          <div class="plan-duration">14 days</div>
+          <span class="chip blue">Ongoing</span>
+        </div>
+        <div class="plan-item">
+          <div class="plan-num">03</div>
+          <div class="plan-info">
+            <div class="plan-name">Endurance Build-up</div>
+            <div class="plan-detail">Aerobic base · Zone 2 runs · Fartlek training</div>
+          </div>
+          <div class="plan-duration">21 days</div>
+          <span class="chip gold">Draft</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- UPLOAD DRILLS -->
+    <div id="c-drills" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Upload Drills</div>
+        <div class="page-sub">Share training videos and exercise guides</div></div>
+      </div>
+      <div class="upload-area" onclick="alert('File picker would open here')">
+        <div class="upload-icon">📤</div>
+        <div class="upload-text">Drop video or PDF here</div>
+        <div class="upload-sub">Supports MP4, MOV, PDF, DOC · Max 500MB per file</div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-title">Uploaded Drills</div>
+      <div class="plan-list">
+        <div class="plan-item">
+          <div style="font-size:28px;">🎥</div>
+          <div class="plan-info"><div class="plan-name">Depth Jump Technique</div><div class="plan-detail">MP4 · 2:34 mins · Uploaded 3 days ago</div></div>
+          <span class="chip green">Published</span>
+        </div>
+        <div class="plan-item">
+          <div style="font-size:28px;">📄</div>
+          <div class="plan-info"><div class="plan-name">Weekly Drill Sheet</div><div class="plan-detail">PDF · 1.2MB · Uploaded today</div></div>
+          <span class="chip blue">Published</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- EARNINGS -->
+    <div id="c-earnings" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Earnings</div>
+        <div class="page-sub">Track your consultation income</div></div>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">This Month</div><div class="stat-value">₹18,400</div><div class="stat-change up">↑ +22%</div></div>
+        <div class="stat-card blue"><div class="stat-icon">📅</div><div class="stat-label">This Year</div><div class="stat-value">₹1.4L</div><div class="stat-change up">↑ on track</div></div>
+        <div class="stat-card gold"><div class="stat-icon">🔗</div><div class="stat-label">Sessions</div><div class="stat-value">47</div><div class="stat-change up">↑ this month</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Recent Transactions</div>
+        <div>
+          <div class="earnings-row"><div><div class="earn-name">Arjun Sharma — Video Review</div><div class="earn-date">Today, 10:30 AM</div></div><div class="earn-amount">+₹500</div></div>
+          <div class="earnings-row"><div><div class="earn-name">Priya Nair — Monthly Plan</div><div class="earn-date">Yesterday</div></div><div class="earn-amount">+₹2,000</div></div>
+          <div class="earnings-row"><div><div class="earn-name">Ravi Kumar — Video Review</div><div class="earn-date">2 days ago</div></div><div class="earn-amount">+₹500</div></div>
+          <div class="earnings-row"><div><div class="earn-name">Group Training Session</div><div class="earn-date">3 days ago</div></div><div class="earn-amount">+₹3,500</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-content coach -->
+</div><!-- end coach app -->
+
+<style>
+  .skel-anim { animation: skelPulse 2.4s ease-in-out infinite; }
+  @keyframes skelPulse { 0%,100%{opacity:0.55} 50%{opacity:1} }
+  .skel-anim:nth-child(2n){animation-delay:0.4s}
+  .skel-anim:nth-child(3n){animation-delay:0.8s}
+</style>
+<script>
+  /* ───── GLOBAL STATE ───── */
+  let currentRole    = 'player';
+  let currentStream  = null;
+
+  // User store: email → { name, initials, role, sport }
+  const registeredUsers = {};
+  let loggedInUser = null;
+
+  // Shared video submissions: array of { id, playerName, playerInitials, coachId, testName, message, time, status }
+  const videoSubmissions = [];
+
+  let mediaRecorder  = null;
+  let recordedChunks = [];
+  let recordedBlob   = null;
+  let isRecording    = false;
+  let timerInterval  = null;
+  let timerSeconds   = 0;
+  let facingMode     = 'user';
+  let uploadedFile   = null;
+  let currentMode    = 'camera';
+
+  // Selection state for Send-to-Coach page
+  let selectedCoachId   = null;
+  let selectedCoachName = null;
+  let selectedVideoName = null;
+
+  /* ───── NAVIGATION ───── */
+  function goScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (id !== 'screen-player-app') stopCamera();
+    // Reset tab to Sign In when going to auth
+    if (id === 'screen-auth') {
+      const loginTab = document.querySelector('.tab-btn');
+      switchTab('login', loginTab);
+    }
+  }
+
+  function goAuth(role) {
+    currentRole = role;
+    const badge = document.getElementById('auth-role-badge');
+    const label = document.getElementById('auth-role-label');
+    const btn   = document.getElementById('auth-btn');
+    const sbtn  = document.getElementById('signup-btn');
+    const title = document.getElementById('auth-title');
+    const pe    = document.getElementById('player-extra');
+    if (role === 'player') {
+      badge.className = 'auth-role-badge green'; label.textContent = 'PLAYER';
+      btn.className = 'btn-primary green';        sbtn.className = 'btn-primary green';
+      title.textContent = 'Welcome, Athlete!';
+      if (pe) pe.style.display = 'grid';
+    } else {
+      badge.className = 'auth-role-badge'; label.textContent = 'COACH';
+      btn.className = 'btn-primary';       sbtn.className = 'btn-primary';
+      title.textContent = 'Welcome, Coach!';
+      if (pe) pe.style.display = 'none';
+    }
+    goScreen('screen-auth');
+  }
+
+  function switchTab(tab, el) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('login-form').style.display  = tab === 'login'  ? 'block' : 'none';
+    document.getElementById('signup-form').style.display = tab === 'signup' ? 'block' : 'none';
+  }
+
+  /* ───── AUTH: SIGN UP ───── */
+  function doSignup() {
+    const firstName = (document.getElementById('signup-firstname').value || '').trim();
+    const lastName  = (document.getElementById('signup-lastname').value  || '').trim();
+    const email     = (document.getElementById('signup-email').value     || '').trim();
+    const password  = (document.getElementById('signup-password').value  || '').trim();
+    const sport     = (document.getElementById('signup-sport') ? document.getElementById('signup-sport').value : '') || 'General';
+
+    if (!firstName)  { showToast('Please enter your first name.', 'error'); return; }
+    if (!email)      { showToast('Please enter your email address.', 'error'); return; }
+    if (!password)   { showToast('Please create a password.', 'error'); return; }
+    if (registeredUsers[email]) { showToast('This email is already registered. Please sign in.', 'error'); return; }
+
+    const fullName = lastName ? firstName + ' ' + lastName : firstName;
+    const initials = (firstName[0] + (lastName ? lastName[0] : '')).toUpperCase();
+
+    registeredUsers[email] = { name: fullName, initials, role: currentRole, sport, email };
+    loggedInUser = registeredUsers[email];
+
+    // If coach registered, add them to the player's coach list
+    if (currentRole === 'coach') refreshRegisteredCoachList();
+
+    // Switch to Sign In, pre-fill email
+    const loginTab = document.querySelector('.tab-btn');
+    switchTab('login', loginTab);
+    const loginEmailEl = document.querySelector('#login-form input[type="email"]');
+    if (loginEmailEl) loginEmailEl.value = email;
+
+    showToast('✅ Account created! Now sign in with your credentials.', 'success');
+  }
+
+  /* ───── AUTH: SIGN IN ───── */
+  function doLogin() {
+    const emailEl    = document.querySelector('#login-form input[type="email"]');
+    const passwordEl = document.querySelector('#login-form input[type="password"]');
+    const email      = emailEl    ? emailEl.value.trim()    : '';
+    const password   = passwordEl ? passwordEl.value.trim() : '';
+
+    if (!email)    { showToast('Please enter your email.', 'error'); return; }
+    if (!password) { showToast('Please enter your password.', 'error'); return; }
+
+    const user = registeredUsers[email];
+    if (!user) {
+      showToast('No account found. Please register first.', 'error');
+      return;
+    }
+
+    loggedInUser = user;
+    // Use the role they registered with, not the landing page role
+    currentRole = user.role;
+    applyUserToApp(user.name, user.initials, user.role, user.sport);
+
+    // Clear password field for security
+    if (passwordEl) passwordEl.value = '';
+
+    goScreen(currentRole === 'player' ? 'screen-player-app' : 'screen-coach-app');
+
+    // If coach, refresh inbox
+    if (currentRole === 'coach') refreshCoachInbox();
+    // If player, refresh coach list
+    if (currentRole === 'player') refreshRegisteredCoachList();
+  }
+
+  /* ───── APPLY USER PROFILE TO APP ───── */
+  function applyUserToApp(fullName, initials, role, sport) {
+    const firstName = fullName.split(' ')[0];
+    sport = sport || 'General';
+
+    if (role === 'player') {
+      const nameEl = document.querySelector('#screen-player-app .user-name');
+      const avEl   = document.querySelector('#screen-player-app .user-avatar');
+      const roleEl = document.querySelector('#screen-player-app .user-role');
+      if (nameEl) nameEl.textContent = fullName;
+      if (avEl)   avEl.textContent   = initials;
+      if (roleEl) roleEl.textContent = sport;
+      const dashSub = document.querySelector('#p-dashboard .page-sub');
+      if (dashSub) dashSub.textContent = `Welcome back, ${firstName}! You're on a 5-day streak 🔥`;
+    } else {
+      const nameEl = document.querySelector('#screen-coach-app .user-name');
+      const avEl   = document.querySelector('#screen-coach-app .user-avatar');
+      const roleEl = document.querySelector('#screen-coach-app .user-role');
+      if (nameEl) nameEl.textContent = fullName;
+      if (avEl)   avEl.textContent   = initials;
+      if (roleEl) roleEl.textContent = 'Coach · ' + sport;
+      const dashSub = document.querySelector('#c-dashboard .page-sub');
+      if (dashSub) dashSub.textContent = `Welcome back, Coach ${firstName}! Check your video inbox.`;
+    }
+  }
+
+  /* ───── TOAST NOTIFICATION ───── */
+  function showToast(msg, type) {
+    let toast = document.getElementById('global-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'global-toast';
+      toast.style.cssText = `position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+        padding:14px 28px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;
+        transition:opacity 0.4s;pointer-events:none;max-width:90vw;text-align:center;`;
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.background = type === 'error' ? 'rgba(255,77,109,0.95)' : 'rgba(0,255,157,0.15)';
+    toast.style.border = type === 'error' ? '1px solid rgba(255,77,109,0.5)' : '1px solid rgba(0,255,157,0.4)';
+    toast.style.color = type === 'error' ? '#fff' : 'var(--accent-green)';
+    toast.style.opacity = '1';
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+  }
+
+  /* ───── SEND TO COACH ───── */
+  function selectCoach(row, coachId, coachName, coachSport) {
+    document.querySelectorAll('.coach-select-row').forEach(r => {
+      r.style.borderColor = 'var(--border)';
+      r.style.background  = 'var(--bg-secondary)';
+      const chk = r.querySelector('.coach-check');
+      if (chk) chk.style.display = 'none';
+    });
+    row.style.borderColor = 'var(--accent-green)';
+    row.style.background  = 'rgba(0,255,157,0.05)';
+    const chk = row.querySelector('.coach-check');
+    if (chk) chk.style.display = 'inline';
+    selectedCoachId   = coachId;
+    selectedCoachName = coachName;
+  }
+
+  function selectVideoToSend(row, videoName) {
+    document.querySelectorAll('.video-select-row').forEach(r => {
+      r.style.borderColor = 'var(--border)';
+      r.style.background  = 'var(--bg-secondary)';
+      const chk = r.querySelector('.video-check');
+      if (chk) chk.style.display = 'none';
+    });
+    row.style.borderColor = 'var(--accent-blue)';
+    row.style.background  = 'rgba(0,198,255,0.05)';
+    const chk = row.querySelector('.video-check');
+    if (chk) chk.style.display = 'inline';
+    selectedVideoName = videoName;
+  }
+
+  function sendVideoToCoach() {
+    if (!selectedCoachId)   { showToast('Please select a coach first.', 'error'); return; }
+    if (!selectedVideoName) { showToast('Please select a video to send.', 'error'); return; }
+
+    const playerName     = loggedInUser ? loggedInUser.name     : 'Anonymous Player';
+    const playerInitials = loggedInUser ? loggedInUser.initials : 'PL';
+    const playerSport    = loggedInUser ? (loggedInUser.sport || 'General') : 'General';
+    const message        = (document.getElementById('send-coach-message').value || '').trim();
+    const now            = new Date();
+    const timeStr        = 'Just now';
+
+    const submission = {
+      id: Date.now(),
+      playerName, playerInitials, playerSport,
+      coachId: selectedCoachId,
+      coachName: selectedCoachName,
+      testName: selectedVideoName,
+      message,
+      time: timeStr,
+      status: 'pending'
+    };
+    videoSubmissions.push(submission);
+
+    // Update sent history in player view
+    addSentHistoryRow(submission);
+
+    // Update player nav badge
+    const badge = document.getElementById('player-sent-badge');
+    if (badge) {
+      const cur = parseInt(badge.textContent) || 0;
+      badge.textContent = cur + 1;
+      badge.style.display = 'inline';
+    }
+
+    // Update coach inbox badge
+    updateCoachInboxBadge();
+
+    showToast(`✅ Video sent to ${selectedCoachName}!`, 'success');
+    document.getElementById('send-coach-message').value = '';
+
+    // Reset selections
+    document.querySelectorAll('.coach-select-row').forEach(r => {
+      r.style.borderColor = 'var(--border)'; r.style.background = 'var(--bg-secondary)';
+      const chk = r.querySelector('.coach-check'); if (chk) chk.style.display = 'none';
+    });
+    document.querySelectorAll('.video-select-row').forEach(r => {
+      r.style.borderColor = 'var(--border)'; r.style.background = 'var(--bg-secondary)';
+      const chk = r.querySelector('.video-check'); if (chk) chk.style.display = 'none';
+    });
+    selectedCoachId = selectedCoachName = selectedVideoName = null;
+  }
+
+  function addSentHistoryRow(sub) {
+    const list = document.getElementById('sent-history-list');
+    if (!list) return;
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:14px;background:var(--bg-secondary);border-radius:10px;display:flex;align-items:center;gap:12px;';
+    div.innerHTML = `<span style="font-size:24px;">📤</span>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:13px;">${sub.testName} → ${sub.coachName}</div>
+        <div style="font-size:12px;color:var(--text-secondary);">${sub.time}${sub.message ? ' · "' + sub.message.slice(0,40) + (sub.message.length>40?'…':'')+'"':''}</div>
+      </div>
+      <span class="chip blue">Pending</span>`;
+    list.insertBefore(div, list.firstChild);
+  }
+
+  /* ───── COACH INBOX ───── */
+  function updateCoachInboxBadge() {
+    // Count all pending submissions targeted to logged-in coach
+    if (!loggedInUser || loggedInUser.role !== 'coach') return;
+    const mySubmissions = videoSubmissions.filter(s =>
+      (s.coachId === loggedInUser.email || s.coachId === 'coach-demo-1' && loggedInUser.email === 'coach-demo-1')
+      || registeredUsers[loggedInUser.email]
+    );
+    // Simple: just show total sent count for now
+    const pendingCount = videoSubmissions.filter(s => s.status === 'pending').length;
+    const badge = document.getElementById('coach-inbox-badge');
+    if (badge) badge.textContent = pendingCount;
+  }
+
+  function refreshCoachInbox() {
+    if (!loggedInUser || loggedInUser.role !== 'coach') return;
+
+    const myEmail = loggedInUser.email;
+    const mine = videoSubmissions.filter(s =>
+      s.coachId === myEmail || s.coachId === 'coach-demo-1'
+    );
+
+    const emptyEl = document.getElementById('inbox-empty');
+    const listEl  = document.getElementById('inbox-list');
+    const chipEl  = document.getElementById('inbox-count-chip');
+    const subEl   = document.getElementById('inbox-sub');
+    if (!listEl) return;
+
+    listEl.innerHTML = '';
+    const pending = mine.filter(s => s.status === 'pending').length;
+
+    if (chipEl) chipEl.textContent = pending + ' new';
+    if (subEl) subEl.textContent = mine.length > 0
+      ? `${mine.length} video${mine.length>1?'s':''} sent to you · ${pending} pending review`
+      : 'Videos sent to you by players for review';
+
+    if (mine.length === 0) {
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    mine.slice().reverse().forEach(sub => {
+      const div = document.createElement('div');
+      div.style.cssText = 'background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px;';
+      div.innerHTML = `
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(0,198,255,0.2),rgba(0,255,157,0.2));
+            border:2px solid var(--border-bright);display:flex;align-items:center;justify-content:center;
+            font-weight:700;font-size:16px;flex-shrink:0;">${sub.playerInitials}</div>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:15px;">${sub.playerName}</div>
+            <div style="font-size:12px;color:var(--text-secondary);">${sub.playerSport} · ${sub.time}</div>
+          </div>
+          <span class="chip ${sub.status==='reviewed'?'green':'blue'}" id="status-chip-${sub.id}">
+            ${sub.status==='reviewed'?'Reviewed ✓':'New ●'}
+          </span>
+        </div>
+        <div style="background:var(--bg-secondary);border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:14px;">
+          <span style="font-size:36px;">🎥</span>
+          <div>
+            <div style="font-weight:600;font-size:14px;">${sub.testName}</div>
+            <div style="font-size:12px;color:var(--text-secondary);">Submitted for review</div>
+          </div>
+        </div>
+        ${sub.message ? `<div style="background:rgba(0,198,255,0.05);border-left:3px solid var(--accent-blue);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:var(--text-secondary);margin-bottom:12px;">"${sub.message}"</div>` : ''}
+        <div style="display:flex;gap:10px;">
+          <button onclick="markReviewed(${sub.id})" id="review-btn-${sub.id}"
+            class="btn-primary" style="flex:1;padding:12px;"
+            ${sub.status==='reviewed'?'disabled style="opacity:0.5;cursor:not-allowed;"':''}>
+            ${sub.status==='reviewed'?'✓ Reviewed':'🎬 Mark as Reviewed'}
+          </button>
+          <button onclick="showCoachPage('c-review',null)"
+            style="padding:12px 20px;background:var(--bg-secondary);border:1px solid var(--border);
+            border-radius:10px;color:var(--text-primary);cursor:pointer;font-family:'Exo 2',sans-serif;
+            font-size:14px;font-weight:600;transition:all 0.2s;">
+            📝 Add Feedback
+          </button>
+        </div>`;
+      listEl.appendChild(div);
+    });
+
+    const badge = document.getElementById('coach-inbox-badge');
+    if (badge) badge.textContent = pending;
+  }
+
+  function markReviewed(subId) {
+    const sub = videoSubmissions.find(s => s.id === subId);
+    if (!sub) return;
+    sub.status = 'reviewed';
+    const chip = document.getElementById('status-chip-' + subId);
+    if (chip) { chip.className = 'chip green'; chip.textContent = 'Reviewed ✓'; }
+    const btn = document.getElementById('review-btn-' + subId);
+    if (btn) { btn.textContent = '✓ Reviewed'; btn.disabled = true; btn.style.opacity = '0.5'; }
+    showToast('Marked as reviewed!', 'success');
+    // Update badge
+    const pending = videoSubmissions.filter(s => s.status === 'pending').length;
+    const badge = document.getElementById('coach-inbox-badge');
+    if (badge) badge.textContent = pending;
+    // Also update inbox sub
+    const subEl = document.getElementById('inbox-sub');
+    if (subEl && loggedInUser) {
+      const myEmail = loggedInUser.email;
+      const mine = videoSubmissions.filter(s => s.coachId === myEmail || s.coachId === 'coach-demo-1');
+      const p2 = mine.filter(s => s.status === 'pending').length;
+      subEl.textContent = `${mine.length} video${mine.length>1?'s':''} sent to you · ${p2} pending review`;
+      const chipEl = document.getElementById('inbox-count-chip');
+      if (chipEl) chipEl.textContent = p2 + ' new';
+    }
+  }
+
+  /* ───── REFRESH REGISTERED COACHES IN PLAYER SEND PAGE ───── */
+  function refreshRegisteredCoachList() {
+    const container = document.getElementById('registered-coaches-list');
+    if (!container) return;
+    container.innerHTML = '';
+    const coaches = Object.values(registeredUsers).filter(u => u.role === 'coach');
+    coaches.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'coach-select-row';
+      div.style.cssText = 'display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;' +
+        'background:var(--bg-secondary);border:2px solid var(--border);cursor:pointer;transition:all 0.2s;';
+      div.onclick = function() { selectCoach(this, c.email, c.name, c.sport); };
+      div.innerHTML = `
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(0,255,157,0.2),rgba(0,198,255,0.2));
+          border:2px solid rgba(0,255,157,0.4);display:flex;align-items:center;justify-content:center;
+          font-weight:700;font-size:16px;flex-shrink:0;">${c.initials}</div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:14px;">${c.name} <span style="font-size:11px;color:var(--accent-green);font-weight:700;">NEW</span></div>
+          <div style="font-size:12px;color:var(--text-secondary);">${c.sport} · Just registered</div>
+        </div>
+        <span class="chip green">Available</span>
+        <span class="coach-check" style="font-size:20px;color:var(--accent-green);display:none;">✓</span>`;
+      container.appendChild(div);
+    });
+  }
+
+  function showPage(id, navEl) {
+    // stop camera if navigating away from record page
+    if (id !== 'p-record') stopCamera();
+    document.querySelectorAll('#screen-player-app .page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (navEl) {
+      document.querySelectorAll('#screen-player-app .nav-item')
+        .forEach(n => n.classList.remove('active','active-green'));
+      navEl.classList.add('active');
+    }
+  }
+
+  function showCoachPage(id, navEl) {
+    document.querySelectorAll('#screen-coach-app .page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (navEl) {
+      document.querySelectorAll('#screen-coach-app .nav-item')
+        .forEach(n => n.classList.remove('active'));
+      navEl.classList.add('active');
+    }
+  }
+
+  function selectSport(card) {
+    document.querySelectorAll('.sport-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  }
+
+  /* ───── RECORD/UPLOAD MODE SWITCH ───── */
+  function switchRecordMode(mode) {
+    currentMode = mode;
+    const isCamera = (mode === 'camera');
+
+    // Tabs visual
+    const tabCam = document.getElementById('mode-tab-camera');
+    const tabUp  = document.getElementById('mode-tab-upload');
+    tabCam.style.background     = isCamera ? 'rgba(0,198,255,0.1)' : 'var(--bg-card)';
+    tabCam.style.borderColor    = isCamera ? 'var(--accent-blue)'   : 'var(--border)';
+    tabUp.style.background      = !isCamera ? 'rgba(0,198,255,0.1)' : 'var(--bg-card)';
+    tabUp.style.borderColor     = !isCamera ? 'var(--accent-blue)'  : 'var(--border)';
+
+    document.getElementById('upload-tab-title').style.color = !isCamera ? 'var(--accent-blue)' : 'var(--text-secondary)';
+
+    // Dots
+    const dotCam = document.getElementById('dot-camera');
+    const dotUp  = document.getElementById('dot-upload');
+    dotCam.style.background   = isCamera  ? 'var(--accent-blue)' : 'var(--bg-secondary)';
+    dotCam.style.border       = isCamera  ? 'none' : '2px solid var(--border)';
+    dotCam.textContent        = isCamera  ? '✓' : '';
+    dotUp.style.background    = !isCamera ? 'var(--accent-blue)' : 'var(--bg-secondary)';
+    dotUp.style.border        = !isCamera ? 'none' : '2px solid var(--border)';
+    dotUp.textContent         = !isCamera ? '✓' : '';
+
+    // Panels
+    document.getElementById('camera-mode-panel').style.display = isCamera  ? 'block' : 'none';
+    document.getElementById('upload-mode-panel').style.display  = !isCamera ? 'block' : 'none';
+
+    // Stop camera when switching to upload
+    if (!isCamera) stopCamera();
+  }
+
+  /* ───── CAMERA: START ───── */
+  async function startCamera() {
+    try {
+      const constraints = { video:{ facingMode, width:{ideal:1280}, height:{ideal:720} }, audio:false };
+      currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const vid = document.getElementById('live-video');
+      vid.srcObject = currentStream;
+      vid.style.display = 'block';
+      document.getElementById('cam-idle').style.display      = 'none';
+      document.getElementById('playback-video').style.display = 'none';
+      document.getElementById('live-overlay').style.display  = 'block';
+      document.getElementById('btn-cam-start').style.display = 'none';
+      document.getElementById('btn-cam-stop').style.display  = 'flex';
+      document.getElementById('btn-flip').style.display      = 'flex';
+      document.getElementById('rec-btn').style.display       = 'flex';
+      document.getElementById('cam-hint').style.display      = 'none';
+      document.getElementById('recorded-ready').style.display = 'none';
+
+      // Animate guidance checks in after 1s
+      setTimeout(() => setGuidance('g1', true), 800);
+      setTimeout(() => setGuidance('g2', true), 1400);
+      setTimeout(() => setGuidance('g3', 'warn'), 2000);
+    } catch(err) {
+      const msg = err.name === 'NotAllowedError'
+        ? 'Camera permission denied. Please allow camera access in your browser settings.'
+        : 'Could not access camera: ' + err.message;
+      alert(msg);
+    }
+  }
+
+  function setGuidance(id, state) {
+    const icon = document.getElementById(id+'-icon');
+    if (!icon) return;
+    if (state === true)    { icon.textContent = '✓'; icon.style.color = 'var(--accent-green)'; }
+    else if (state === 'warn') { icon.textContent = '⚠'; icon.style.color = 'var(--accent-gold)'; }
+    else                   { icon.textContent = '○'; icon.style.color = 'var(--text-muted)'; }
+  }
+
+  /* ───── CAMERA: STOP ───── */
+  function stopCamera() {
+    if (currentStream) {
+      currentStream.getTracks().forEach(t => t.stop());
+      currentStream = null;
+    }
+    if (isRecording) stopRecording();
+    const vid = document.getElementById('live-video');
+    if (vid) { vid.srcObject = null; vid.style.display = 'none'; }
+    const overlay = document.getElementById('live-overlay');
+    if (overlay) overlay.style.display = 'none';
+    if (!recordedBlob) {
+      const idle = document.getElementById('cam-idle');
+      if (idle) idle.style.display = 'flex';
+    }
+    el('btn-cam-start') && showEl('btn-cam-start');
+    el('btn-cam-stop')  && (el('btn-cam-stop').style.display  = 'none');
+    el('btn-flip')      && (el('btn-flip').style.display      = 'none');
+    el('rec-btn')       && (el('rec-btn').style.display       = 'none');
+    el('cam-hint')      && showEl('cam-hint');
+    resetGuidance();
+  }
+
+  function el(id) { return document.getElementById(id); }
+  function showEl(id) { const e = el(id); if(e) e.style.display = 'flex'; }
+  function resetGuidance() {
+    ['g1','g2','g3','g4'].forEach(g => setGuidance(g, false));
+  }
+
+  /* ───── CAMERA: FLIP ───── */
+  async function flipCamera() {
+    facingMode = facingMode === 'user' ? 'environment' : 'user';
+    stopCamera();
+    await startCamera();
+  }
+
+  /* ───── RECORDING: TOGGLE ───── */
+  function toggleRecording() {
+    isRecording ? stopRecording() : startRecording();
+  }
+
+  function startRecording() {
+    if (!currentStream) return;
+    recordedChunks = [];
+    recordedBlob   = null;
+
+    // Pick best supported mime
+    const mimeTypes = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];
+    const mime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || '';
+    mediaRecorder = new MediaRecorder(currentStream, mime ? { mimeType: mime } : {});
+
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = onRecordingDone;
+    mediaRecorder.start(250); // collect every 250ms
+
+    isRecording = true;
+    timerSeconds = 0;
+    const btn = el('rec-btn');
+    btn.classList.add('recording');
+    btn.textContent = '⏹';
+    el('rec-badge-live').style.display = 'block';
+    el('size-indicator').style.display = 'block';
+
+    timerInterval = setInterval(() => {
+      timerSeconds++;
+      const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+      const s = String(timerSeconds%60).padStart(2,'0');
+      el('timer-display').textContent = m+':'+s;
+      // estimate size
+      const mb = (recordedChunks.reduce((a,c)=>a+c.size,0)/1048576).toFixed(1);
+      el('size-text').textContent = mb+' MB';
+    }, 1000);
+
+    // Simulate cheat detection updates
+    setTimeout(()=>{ el('cd1').className='chip green'; el('cd1').textContent='Clear ✓'; }, 1200);
+    setTimeout(()=>{ el('cd2').className='chip green'; el('cd2').textContent='Valid ✓'; }, 2100);
+    setTimeout(()=>{ el('cd3').className='chip blue';  el('cd3').textContent='Monitoring'; }, 1800);
+    setTimeout(()=>{ el('cd4').className='chip green'; el('cd4').textContent='99.2% ✓'; }, 3000);
+    setGuidance('g4', true);
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    isRecording = false;
+    clearInterval(timerInterval);
+    const btn = el('rec-btn');
+    if (btn) { btn.classList.remove('recording'); btn.textContent = '⏺'; }
+    const badge = el('rec-badge-live');
+    if (badge) badge.style.display = 'none';
+  }
+
+  function onRecordingDone() {
+    const mime = mediaRecorder.mimeType || 'video/webm';
+    recordedBlob = new Blob(recordedChunks, { type: mime });
+
+    // Show playback
+    const pbVid = el('playback-video');
+    pbVid.src = URL.createObjectURL(recordedBlob);
+    pbVid.style.display = 'block';
+    el('live-video').style.display   = 'none';
+    el('live-overlay').style.display = 'none';
+    el('cam-idle').style.display     = 'none';
+
+    // Hide rec btn, show retake
+    el('rec-btn').style.display      = 'none';
+    el('btn-cam-stop').style.display = 'none';
+    el('btn-flip').style.display     = 'none';
+    el('btn-retake').style.display   = 'flex';
+    el('cam-hint').style.display     = 'none';
+
+    el('recorded-ready').style.display = 'block';
+  }
+
+  function retake() {
+    recordedBlob   = null;
+    recordedChunks = [];
+    el('playback-video').style.display   = 'none';
+    el('recorded-ready').style.display   = 'none';
+    el('btn-retake').style.display       = 'none';
+    el('timer-display').textContent      = '00:00';
+    el('size-indicator').style.display   = 'none';
+    // Reset cheat panel
+    ['cd1','cd2','cd3','cd4'].forEach(id=>{
+      el(id).className='chip blue'; el(id).textContent='Waiting…';
+    });
+    resetGuidance();
+    startCamera();
+  }
+
+  function submitForAnalysis() {
+    if (!recordedBlob) return;
+    // Simulate upload progress then go to results
+    const btn = document.querySelector('#recorded-ready .btn-primary');
+    btn.textContent = '⬆ Uploading…';
+    btn.disabled = true;
+    setTimeout(() => { showPage('p-results', null); btn.textContent='🤖 Submit for AI Analysis'; btn.disabled=false; }, 1800);
+  }
+
+  /* ───── FILE UPLOAD ───── */
+  function handleDrop(event) {
+    event.preventDefault();
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.style.borderColor = '';
+    dropZone.style.background  = '';
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('video/')) processVideoFile(file);
+    else alert('Please drop a valid video file (MP4, MOV, WebM, AVI).');
+  }
+
+  function handleVideoFile(event) {
+    const file = event.target.files[0];
+    if (file) processVideoFile(file);
+  }
+
+  function processVideoFile(file) {
+    uploadedFile = file;
+    const sizeMB = (file.size / 1048576).toFixed(1);
+    if (file.size > 500 * 1048576) { alert('File too large. Max 500 MB.'); return; }
+
+    el('upload-filename').textContent = file.name;
+    el('upload-filesize').textContent = sizeMB + ' MB';
+    el('up-size').textContent         = sizeMB + ' MB';
+    el('up-format').textContent       = file.type.split('/')[1].toUpperCase();
+    el('preview-label').textContent   = '📹 ' + file.name;
+
+    // Load into preview player
+    const previewVid = el('upload-video-preview');
+    previewVid.src = URL.createObjectURL(file);
+    previewVid.onloadedmetadata = () => {
+      const dur = previewVid.duration;
+      const m = String(Math.floor(dur/60)).padStart(2,'0');
+      const s = String(Math.floor(dur%60)).padStart(2,'0');
+      el('up-duration').textContent = m+':'+s;
+      el('up-res').textContent      = previewVid.videoWidth + '×' + previewVid.videoHeight;
+    };
+
+    el('drop-zone').style.display      = 'none';
+    el('upload-preview').style.display = 'block';
+  }
+
+  function clearUpload() {
+    uploadedFile = null;
+    const previewVid = el('upload-video-preview');
+    previewVid.src = '';
+    el('video-file-input').value = '';
+    el('drop-zone').style.display      = 'block';
+    el('upload-preview').style.display = 'none';
+    el('upload-progress-wrap').style.display = 'none';
+  }
+
+  function submitUploadedVideo() {
+    if (!uploadedFile) return;
+    const btn = el('submit-upload-btn');
+    btn.disabled    = true;
+    btn.textContent = '⬆ Uploading…';
+
+    el('upload-progress-wrap').style.display = 'block';
+    let pct = 0;
+    const iv = setInterval(() => {
+      pct += Math.random() * 18 + 4;
+      if (pct >= 100) { pct = 100; clearInterval(iv); }
+      el('progress-bar-fill').style.width = pct + '%';
+      el('progress-pct').textContent      = Math.floor(pct) + '%';
+      if (pct >= 100) {
+        btn.textContent = '🤖 Analysing…';
+        setTimeout(() => { showPage('p-results', null); btn.disabled=false; btn.textContent='🤖 Analyse with AI'; }, 900);
+      }
+    }, 180);
+  }
+
+  /* ───── MISC ───── */
+  function setStars(n) {
+    document.querySelectorAll('#star-row span').forEach((s,i) => {
+      s.style.filter = i < n ? 'none' : 'grayscale(1) opacity(0.4)';
+    });
+  }
+</script>
+</body>
+</html>
